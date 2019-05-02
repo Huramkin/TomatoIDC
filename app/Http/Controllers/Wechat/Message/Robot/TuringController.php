@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Wechat\Message\Robot;
 
 //TODO 接入图灵机器人
 
-use App\SettingModel;
+use App\Setup;
 use GuzzleHttp\Client;
 use EasyWeChat\Kernel\Contracts\EventHandlerInterface;
 use EasyWeChat\Kernel\Messages\Text;
@@ -119,7 +119,7 @@ class TuringController implements EventHandlerInterface
 
     protected function checkSettingStatus()
     {
-        $set = SettingModel::where('name', 'setting.wechat.robot.drive')->get();
+        $set = Setup::where('name', 'setting.wechat.robot.drive')->get();
         if ($set->isEmpty() && $set->first()->value != 1) {
             return false;
         }
@@ -128,9 +128,9 @@ class TuringController implements EventHandlerInterface
             'setting.wechat.robot.turing.key'     => null
         ];
         foreach ($settingArr as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->get();
+            $setTemp = Setup::where('name', $key)->get();
             if ($setTemp->isEmpty()) {
-                SettingModel::create(
+                Setup::create(
                     [
                         'name'  => $key,
                         'value' => $value
@@ -140,7 +140,7 @@ class TuringController implements EventHandlerInterface
         }
         $result = [];
         foreach ($settingArr as $key => $value) {
-            $setTemp      = SettingModel::where('name', $key)->first();
+            $setTemp      = Setup::where('name', $key)->first();
             $result[$key] = $setTemp['value'];
         }
         return $result;

@@ -7,9 +7,9 @@ use App\Http\Controllers\HostController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserRechargeController;
-use App\OrderModel;
-use App\ServerModel;
-use App\SettingModel;
+use App\Order;
+use App\Server;
+use App\Setup;
 use App\UserRechargeModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -79,7 +79,7 @@ class PayController extends Controller
      */
     public function makePay($payment, $order)
     {
-        $payPlugin = SettingModel::where('name', 'setting.website.payment.' . $payment)->first();
+        $payPlugin = Setup::where('name', 'setting.website.payment.' . $payment)->first();
         $payPlugin = $payPlugin['value'];
         if (!empty($payPlugin)) {
             $order->price = $order->money; //解决数据键名不一
@@ -117,13 +117,13 @@ class PayController extends Controller
         $payment = htmlspecialchars(trim($payment));
         switch ($payment) {
             case "wechat":
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.wechat')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.wechat')->first();
                 break;
             case "alipay":
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.alipay')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.alipay')->first();
                 break;
             case 'diy'://如果是多码合一或其他，交给支付宝的插件
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.alipay')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.alipay')->first();
                 break;
             default:
                 Log::info('Notify Error', ['payment' => $payment]);
@@ -151,7 +151,7 @@ class PayController extends Controller
             $value = $api_no;
         }
         //订单
-        $order = OrderModel::where($key, $value)->get();
+        $order = Order::where($key, $value)->get();
         if (!$order->isEmpty()) {//订单支付
             return $order->first();
         }
@@ -171,10 +171,10 @@ class PayController extends Controller
     protected function paySuccessAction($no)
     {
         //订单
-        $order = OrderModel::where('no', $no)->get();
+        $order = Order::where('no', $no)->get();
         if (!$order->isEmpty()) {//订单支付
             if ($order->first()->status == 1) {
-                OrderModel::where('no', $no)->update(['status' => 2]);
+                Order::where('no', $no)->update(['status' => 2]);
                 $action = new OrderController();
                 //                dd($order->status);
                 $action->subGoodInventory($no); //扣除库存
@@ -201,7 +201,7 @@ class PayController extends Controller
      */
     public function autoCheckOrderStatus()
     {
-        $orders = OrderModel::where(
+        $orders = Order::where(
             [
                 ['status', 1],
                 ['created_at', '>=', Carbon::now()->subHour()]
@@ -235,8 +235,8 @@ class PayController extends Controller
     {
         if (!$orders->isEmpty()) {
             //支付查询
-            $alipayPayPlugin = SettingModel::where('name', 'setting.website.payment.alipay')->first()->value;
-            $wechatPayPlugin = SettingModel::where('name', 'setting.website.payment.wechat')->first()->value;
+            $alipayPayPlugin = Setup::where('name', 'setting.website.payment.alipay')->first()->value;
+            $wechatPayPlugin = Setup::where('name', 'setting.website.payment.wechat')->first()->value;
             $controllers = [$alipayPayPlugin, $wechatPayPlugin];
             foreach ($controllers as $controller) { //查询
                 if (empty($controller)) {//未设置的时候跳过
@@ -284,16 +284,16 @@ class PayController extends Controller
         $payment = htmlspecialchars(trim($payment));
         switch ($payment) {
             case "wechat":
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.wechat')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.wechat')->first();
                 break;
             case "alipay":
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.alipay')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.alipay')->first();
                 break;
             case "qqpay":
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.qqpay')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.qqpay')->first();
                 break;
             case "diy":
-                $payPlugin = SettingModel::where('name', 'setting.website.payment.diy')->first();
+                $payPlugin = Setup::where('name', 'setting.website.payment.diy')->first();
                 break;
             default :
                 return false;
@@ -324,7 +324,7 @@ class PayController extends Controller
                     $key => 'string|nullable'
                 ]
             );
-            SettingModel::where('name', $value)->update(['value' => $request[$key]]);
+            Setup::where('name', $value)->update(['value' => $request[$key]]);
         }
         return back()->with('status', 'success');
     }

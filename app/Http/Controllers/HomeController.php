@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\GoodModel;
-use App\HostModel;
-use App\NewModel;
-use App\OrderModel;
+use App\Goods;
+use App\Host;
+use App\News;
+use App\Order;
 use App\User;
-use App\WorkOrderModel;
-use App\WorkOrderReplyModel;
+use App\Ticket;
+use App\TicketReply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -38,7 +38,7 @@ class HomeController extends Controller
      */
     public function indexPage()
     {
-        $orders = OrderModel::where([
+        $orders = Order::where([
             ['status', '!=', '1'],
             ['status', '!=', '0'],
             ['type', 'new'],
@@ -62,7 +62,7 @@ class HomeController extends Controller
      */
     public function hostShowPage()
     {
-        $hosts = HostModel::where([
+        $hosts = Host::where([
             ['status', '!=', '0'],
             ['user_id', Auth::id()]
         ])->orderBy('created_at', 'desc')
@@ -76,11 +76,11 @@ class HomeController extends Controller
      */
     public function renewHostPage($id)
     {
-        $host = HostModel::where('id', htmlspecialchars(trim($id)))->get();
+        $host = Host::where('id', htmlspecialchars(trim($id)))->get();
         if (!$host->isEmpty()) {
             $host = $host->first();
             $this->authorize('view', $host);
-            $goodController  = new GoodController();
+            $goodController  = new GoodsController();
             $charging = $goodController->getCharging($host->order->good->id);
             return view(ThemeController::backThemePath('renew', 'home.hosts'), compact('host','charging'));
         }
@@ -92,7 +92,7 @@ class HomeController extends Controller
      */
     public function rePayOrderPage($no)
     {
-        $order = OrderModel::where('no', htmlspecialchars(trim($no)))->get();
+        $order = Order::where('no', htmlspecialchars(trim($no)))->get();
         if (!$order->isEmpty()) {
             $order = $order->first();
 
@@ -111,10 +111,10 @@ class HomeController extends Controller
      */
     public function goodsBuyPage($id)
     {
-        $good = GoodModel::where('id', $id)->get();
+        $good = Goods::where('id', $id)->get();
         if (!$good->isEmpty()) {
             $good = $good->first();
-            $goodController  = new GoodController();
+            $goodController  = new GoodsController();
             $charging = $goodController->getCharging($good->id);
             return view(ThemeController::backThemePath('buy', 'home.goods'), compact('good','charging'));
         }
@@ -135,7 +135,7 @@ class HomeController extends Controller
      */
     public function workOrderShowPage()
     {
-        $workOrder = WorkOrderModel::where([
+        $workOrder = Ticket::where([
             ['status', '!=', '0'],
             ['user_id', Auth::id()]
         ])->orderBy('created_at', 'desc')
@@ -152,7 +152,7 @@ class HomeController extends Controller
      */
     protected function getOrder($id)
     {
-        $orders = OrderModel::
+        $orders = Order::
         where([
             ['status', '!=', '0'],
             ['user_id', $id]
@@ -167,7 +167,7 @@ class HomeController extends Controller
      */
     public function newShowPage()
     {
-        $news = NewModel::where([
+        $news = News::where([
             ['status', '!=', '0'],
         ])->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -179,7 +179,7 @@ class HomeController extends Controller
      */
     public function newPostPage($id)
     {
-        $new = NewModel::where('id', $id)->get();
+        $new = News::where('id', $id)->get();
         if (!$new->isEmpty()) {
             $new = $new->first();
         } else {
@@ -194,7 +194,7 @@ class HomeController extends Controller
      */
     public function hostDetailedPage($id)
     {
-        $host = HostModel::where('id', $id)->get();
+        $host = Host::where('id', $id)->get();
         if (!$host->isEmpty()) {
             $host = $host->first();
         } else {
@@ -210,10 +210,10 @@ class HomeController extends Controller
      */
     public function workOrderDetailedPage($id)
     {
-        $workOrder = WorkOrderModel::where('id', $id)->get();
+        $workOrder = Ticket::where('id', $id)->get();
         if (!$workOrder->isEmpty()) {
             $workOrder = $workOrder->first();
-            $reply = WorkOrderReplyModel::where('work_order_id', $workOrder->id)->get();
+            $reply = TicketReply::where('work_order_id', $workOrder->id)->get();
             !$reply->isEmpty() ?: $reply = null;//防止报错
             $this->authorize('view', $workOrder); //防止越权
             return view(ThemeController::backThemePath('detailed', 'home.work_order'), compact('workOrder', 'reply'));
@@ -226,7 +226,7 @@ class HomeController extends Controller
      */
     public function orderDetailedPage($no)
     {
-        $order = OrderModel::where('no', $no)->get();
+        $order = Order::where('no', $no)->get();
         if (!$order->isEmpty()) {
             $order = $order->first();
             $this->authorize('view', $order); //防止越权

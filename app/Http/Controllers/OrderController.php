@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\ChargingModel;
-use App\GoodModel;
-use App\HostModel;
+use App\Bill;
+use App\Goods;
+use App\Host;
 use App\Http\Controllers\MailDrive\UserMailController;
 use App\Http\Controllers\Payment\PayController;
-use App\OrderModel;
-use App\SettingModel;
+use App\Order;
+use App\Setup;
 use App\User;
 use function GuzzleHttp\Psr7\uri_for;
 use Illuminate\Http\Request;
@@ -38,16 +38,16 @@ class OrderController extends Controller
 
     /**
      * 生成订单
-     * @param $good_id
+     * @param $goods_id
      * @param $price
      * @param $user_id
      * @param null $type
      * @param null $aff_no
      * @return mixed
      */
-    protected function makeOrder($good_id, $price, $user_id, $type = null, $aff_no = null, $domain = null, $json_configure = null)
+    protected function makeOrder($goods_id, $price, $user_id, $type = null, $aff_no = null, $domain = null, $json_configure = null)
     {
-        $good = GoodModel::where('id', $good_id)->first();
+        $good = Goods::where('id', $goods_id)->first();
 
         if ($good->inventory !== null) {
 
@@ -56,10 +56,10 @@ class OrderController extends Controller
             }
         }
         if (!empty($good->purchase_limit) && $good->purchase_limit != 0) {
-            $numOrder = OrderModel::where(
+            $numOrder = Order::where(
                 [
                     ['status', '!=', 0],
-                    ['good_id', $good_id],
+                    ['goods_id', $goods_id],
                     ['user_id', $user_id]
                 ]
             )->get();
@@ -69,9 +69,9 @@ class OrderController extends Controller
         }
         //订单创建
         $no = date('y') . mt_rand(1000, 9999) . substr(time(), 7) . mt_rand(100, 999);
-        $order = OrderModel::create(
+        $order = Order::create(
             [
-                'good_id' => $good_id,
+                'goods_id' => $goods_id,
                 'user_id' => $user_id,
                 'no' => $no,
                 'type' => $type,
@@ -81,7 +81,7 @@ class OrderController extends Controller
             ]
         );
         if (!empty($json_configure)) { //添加配置
-            OrderModel::where('no', $order->no)->update(['json_configure' => $json_configure]);
+            Order::where('no', $order->no)->update(['json_configure' => $json_configure]);
         }
         $this->subGoodInventory($order->no);//扣除库存
         return $order;
@@ -94,8 +94,8 @@ class OrderController extends Controller
      */
     public function subGoodInventory($order_no)
     {
-        $order = OrderModel::where('no', $order_no)->first();
-        $setting = SettingModel::where('name', 'setting.website.good.inventory')->get();
+        $order = Order::where('no', $order_no)->first();
+        $setting = Setup::where('name', 'setting.website.good.inventory')->get();
         if ($setting->isEmpty()) {
             $setting = 1;
         }
@@ -105,18 +105,15 @@ class OrderController extends Controller
         if ($order->good->inventory == null) {//库存无限则不执行操作
             return true;
         }
-        //        dd($order->count());
-        //        dd(123);
-        //        dd($order->good_id);
         if ($setting == 1) { //mode 1 付款后扣库存
             if ($order->status == 2) {
-                $good = GoodModel::where('id', $order->good_id)->update(['inventory' => $order->good->inventory - 1]);
+                $good = Goods::where('id', $order->goods_id)->update(['inventory' => $order->good->inventory - 1]);
                 return $good;
             }
         }
         if ($setting == 2) { //mode 2 创建订单 付款前扣库存
             if ($order->status == 1) {
-                $good = GoodModel::where('id', $order->good_id)->update(['inventory' => $order->good->inventory - 1]);
+                $good = Goods::where('id', $order->goods_id)->update(['inventory' => $order->good->inventory - 1]);
                 return $good;
             }
         }
@@ -141,11 +138,11 @@ class OrderController extends Controller
             ]
         );
 
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $this->authorize('update', $host);//防止越权
         //创建订单
 
-        $good = GoodModel::where('id', $host->order->good->id)->first();
+        $good = Goods::where('id', $host->order->good->id)->first();
         $timeArr = $this->checkTime($request, $good,true);
         $order = $this->makeOrder($good->id, $timeArr['price'], Auth::id(), 'renew', $request['no'], null, $timeArr['configure']);
 
@@ -153,14 +150,14 @@ class OrderController extends Controller
             return back()->with(['status' => 'failure', 'text' => "无法下单"]);
         }
 
-        OrderModel::where('no', $order->no)->update(['host_id' => $host->id, 'domain' => $host->order->domain]);
+        Order::where('no', $order->no)->update(['host_id' => $host->id, 'domain' => $host->order->domain]);
 
         if (!$order) { //错误提醒
             return redirect(route('order.show'))->with(['status' => 'failure', 'text' => "超过限购或库存已空"]);
         }
 
         if (!$good->price) {//白嫖 免费
-            OrderModel::where('id', $order->no)->update(['status' => 2]);
+            Order::where('id', $order->no)->update(['status' => 2]);
             $this->subGoodInventory($order->no);//扣除库存
             return redirect(route('order.status', ['no' => $order['no']]));
         }
@@ -175,7 +172,7 @@ class OrderController extends Controller
         }
 
         //微信支付宝调用插件
-        $payPlugin = SettingModel::where('name', 'setting.website.payment.' . $request['payment'])->first();
+        $payPlugin = Setup::where('name', 'setting.website.payment.' . $request['payment'])->first();
         $payPlugin = $payPlugin['value'];
         if (!empty($payPlugin)) {
             $pay = new PayController;
@@ -219,8 +216,8 @@ class OrderController extends Controller
                 $this->validate($request, [
                     'charging_id' => 'exists:charging,id|required'
                 ]);
-                $charging = ChargingModel::where('id', $request['charging_id'])->first();
-                $goodsId = $charging->good_id;
+                $charging = Bill::where('id', $request['charging_id'])->first();
+                $goodsId = $charging->goods_id;
                 $request['goods_id'] = (int)$goodsId;
 
                 if ($use_goods_id) {
@@ -273,7 +270,7 @@ class OrderController extends Controller
             ]
         );
 
-        $good = GoodModel::where('id', $request['id'])->first();
+        $good = Goods::where('id', $request['id'])->first();
 
         if ($good->domain_config) {
             $this->validate(
@@ -301,7 +298,7 @@ class OrderController extends Controller
         }
 
         if (!(int)$good->price) {//白嫖 免费
-            OrderModel::where('no', $order->no)->update(['status' => 2]);
+            Order::where('no', $order->no)->update(['status' => 2]);
             $this->subGoodInventory($order->no);//扣除库存
             return redirect(route('order.status', ['no' => $order['no']]));
         }
@@ -316,7 +313,7 @@ class OrderController extends Controller
         }
 
         //微信支付宝调用插件
-        $payPlugin = SettingModel::where('name', 'setting.website.payment.' . $request['payment'])->first();
+        $payPlugin = Setup::where('name', 'setting.website.payment.' . $request['payment'])->first();
         $payPlugin = $payPlugin['value'];
         if (!empty($payPlugin)) {
             $pay = new PayController;
@@ -342,7 +339,7 @@ class OrderController extends Controller
                 'no' => 'exists:orders,no|required',
             ]
         );
-        $order = OrderModel::where('no', $request['no'])->first();
+        $order = Order::where('no', $request['no'])->first();
 
         $this->authorize('view', $order);//防止越权
 
@@ -358,7 +355,7 @@ class OrderController extends Controller
         }
 
         if (!(int)$order->price) {//白嫖 免费
-            OrderModel::where('no', $order->no)->update(['status' => 2]);
+            Order::where('no', $order->no)->update(['status' => 2]);
             return redirect(route('order.status', ['no' => $order['no']]));
         }
 
@@ -372,7 +369,7 @@ class OrderController extends Controller
         }
 
 
-        $payPlugin = SettingModel::where('name', 'setting.website.payment.' . $request['payment'])->first();
+        $payPlugin = Setup::where('name', 'setting.website.payment.' . $request['payment'])->first();
         $payPlugin = $payPlugin['value'];
         if (!empty($payPlugin)) {
             $pay = new PayController;
@@ -384,11 +381,11 @@ class OrderController extends Controller
 
     /**
      * 余额支付
-     * @param OrderModel $order 订单
+     * @param Order $order 订单
      * @param $user User 用户
      * @return bool|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector 成功返回跳转，失败返回false
      */
-    protected function accountPay(OrderModel $order, $user)
+    protected function accountPay(Order $order, $user)
     {
         //        dd(33.12 <= 32.33);
         $compare = bccomp($user->account, $order->price, 2);
@@ -399,7 +396,7 @@ class OrderController extends Controller
                 ['account' => bcsub($user->account, $order->price, 2)]
             )
             ) {
-                OrderModel::where('no', $order->no)->update(['status' => 2]);
+                Order::where('no', $order->no)->update(['status' => 2]);
                 //                dd($order->no);
                 $this->subGoodInventory($order->no);//扣除库存
                 return redirect(route('order.status', ['no' => $order['no']]));
@@ -448,7 +445,7 @@ class OrderController extends Controller
      */
     public function orderCheckStatusFun($no)
     {
-        $order = OrderModel::where('no', $no)->first();//获取订单
+        $order = Order::where('no', $no)->first();//获取订单
 
         //订单支付成功执行的操作
         if ($order->status == 2 && $order->type == "new") {//判断是否新购订单
@@ -456,7 +453,7 @@ class OrderController extends Controller
                 return redirect(route('order.show'));
             }
             //异步开通,标记订单
-            $async = SettingModel::where('name', 'setting.async.create.host')->get();
+            $async = Setup::where('name', 'setting.async.create.host')->get();
             if (!$async->isEmpty() && $async->first()->value == 1) {
                 $order->status = 4;
                 $order->save();
@@ -501,7 +498,7 @@ class OrderController extends Controller
                 'domain' => 'string|unique:orders|nullable'
             ]
         );
-        OrderModel::where('no', $request['no'])->update(['price' => $request['price'], 'domain' => $request['domain']]);
+        Order::where('no', $request['no'])->update(['price' => $request['price'], 'domain' => $request['domain']]);
         return redirect(route('admin.order.show'));
     }
 }

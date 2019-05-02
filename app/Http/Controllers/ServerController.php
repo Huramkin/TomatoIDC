@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Server\ServerPluginController;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,7 +32,7 @@ class ServerController extends Controller
             'password' => 'nullable|min:1|max:200',
         ]);
 
-        ServerModel::where('id', $request['id'])->update([
+        Server::where('id', $request['id'])->update([
             'title' => $request['title'],
             'ip' => $request['ip'],
             'key' => $request['key'],
@@ -58,7 +58,7 @@ class ServerController extends Controller
         $this->validate($request, [
             'id' => 'exists:servers,id|required'
         ]);
-        ServerModel::where('id', $request['id'])->update(['status' => 0]);
+        Server::where('id', $request['id'])->update(['status' => 0]);
         return redirect(route('admin.server.show'));
     }
 
@@ -83,7 +83,7 @@ class ServerController extends Controller
             'password' => 'nullable|min:1|max:200',
         ]);
 
-        ServerModel::create([
+        Server::create([
             'title' => $request['title'],
             'ip' => $request['ip'],
             'key' => $request['key'],
@@ -105,7 +105,7 @@ class ServerController extends Controller
     public function serverStatusPage($id)
     {
         AdminController::checkAdminAuthority(Auth::user());
-        $server = ServerModel::where('id', $id)->get();
+        $server = Server::where('id', $id)->get();
         if (!$server->isEmpty()) {
             $server = $server->first();
             if (empty($server->plugin)) {

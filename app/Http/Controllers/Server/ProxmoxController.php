@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
@@ -33,7 +33,7 @@ class ProxmoxController extends Controller
 
     /**
      * 向服务器发送请求
-     * @param $server ServerModel
+     * @param $server Server
      * @param $method string GET|POST
      * @param $action string url
      * @param null $configure
@@ -160,7 +160,7 @@ class ProxmoxController extends Controller
         $this->clientApi($server,'POST',' /api2/json/nodes/'.$node.'/lxc',null,$param);
 
         dd(json_decode($this->clientApi($server, 'GET', '/api2/json/nodes', $configure)));
-        $host = HostModel::create(
+        $host = Host::create(
             [
                 'order_id'   => $order->id,
                 'user_id'    => $order->user_id,

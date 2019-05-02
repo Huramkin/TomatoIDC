@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -107,7 +107,7 @@ class CpanelController extends Controller
         $data = $response->getBody()->getContents();
         $data = json_decode($data);
         if ($data->metadata->result) {
-            $host = HostModel::create(
+            $host = Host::create(
                 [
                     'order_id'   => $order->id,
                     'user_id'    => $order->user_id,
@@ -184,7 +184,7 @@ class CpanelController extends Controller
         $data = $response->getBody()->getContents();
         $data = json_decode($data);
         if ($data->metadata->result) {
-            HostModel::where('id', $host->id)->update(['host_pass' => $password]);
+            Host::where('id', $host->id)->update(['host_pass' => $password]);
             return $host;
         }
         Log::error('Cpanel error', [$data]);

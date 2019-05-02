@@ -3,10 +3,8 @@
 namespace App;
 
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Thomaswelton\LaravelGravatar\Facades\Gravatar;
-
 
 class User extends Authenticatable
 {
@@ -18,17 +16,9 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password','api_key'
+        'name', 'username','email', 'password','api_token'
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
-    protected $hidden = [
-        'password', 'remember_token', 'api_token','user_token', 'wechat_token', 'qq_token',
-    ];
 
     /**
      * 当用户没有头像的时候，返回gravatar
@@ -43,18 +33,37 @@ class User extends Authenticatable
         return $value;
     }
 
+
     public function order()
     {
-        return $this->hasMany('App\OrderModel', 'user_id', 'id');
+        return $this->hasMany('App\Order', 'user_id', 'id');
     }
 
     public function host()
     {
-        return $this->hasMany('App\HostModel', 'user_id', 'id');
+        return $this->hasMany('App\Host', 'user_id', 'id');
     }
 
     public function workOrder()
     {
-        return $this->hasMany('App\WorkOrderModel', 'user_id', 'id');
+        return $this->hasMany('App\Ticket', 'user_id', 'id');
     }
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
 }

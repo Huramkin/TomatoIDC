@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\User;
-use App\OrderModel;
+use App\Order;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class OrderPolicy
@@ -14,10 +14,10 @@ class OrderPolicy
      * Determine whether the user can view the order model.
      *
      * @param  \App\User  $user
-     * @param  \App\OrderModel  $orderModel
+     * @param  \App\Order  $orderModel
      * @return mixed
      */
-    public function view(User $user, OrderModel $orderModel)
+    public function view(User $user, Order $orderModel)
     {
         return $user->id === $orderModel->user_id;
     }
@@ -37,10 +37,10 @@ class OrderPolicy
      * Determine whether the user can update the order model.
      *
      * @param  \App\User  $user
-     * @param  \App\OrderModel  $orderModel
+     * @param  \App\Order  $orderModel
      * @return mixed
      */
-    public function update(User $user, OrderModel $orderModel)
+    public function update(User $user, Order $orderModel)
     {
         return $user->id === $orderModel->user_id;
     }
@@ -49,10 +49,10 @@ class OrderPolicy
      * Determine whether the user can delete the order model.
      *
      * @param  \App\User  $user
-     * @param  \App\OrderModel  $orderModel
+     * @param  \App\Order  $orderModel
      * @return mixed
      */
-    public function delete(User $user, OrderModel $orderModel)
+    public function delete(User $user, Order $orderModel)
     {
         //
     }
@@ -61,10 +61,10 @@ class OrderPolicy
      * Determine whether the user can restore the order model.
      *
      * @param  \App\User  $user
-     * @param  \App\OrderModel  $orderModel
+     * @param  \App\Order  $orderModel
      * @return mixed
      */
-    public function restore(User $user, OrderModel $orderModel)
+    public function restore(User $user, Order $orderModel)
     {
         //
     }
@@ -73,10 +73,10 @@ class OrderPolicy
      * Determine whether the user can permanently delete the order model.
      *
      * @param  \App\User  $user
-     * @param  \App\OrderModel  $orderModel
+     * @param  \App\Order  $orderModel
      * @return mixed
      */
-    public function forceDelete(User $user, OrderModel $orderModel)
+    public function forceDelete(User $user, Order $orderModel)
     {
         //
     }

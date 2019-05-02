@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Payment;
 
 use App\Http\Controllers\Controller;
-use App\SettingModel;
+use App\Setup;
 use GuzzleHttp\Client;
 use Yansongda\Pay\Log;
 
@@ -38,9 +38,9 @@ class CodePayController extends Controller
     protected function getSetting()
     {
         foreach ($this->settingArray as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->get();
+            $setTemp = Setup::where('name', $key)->get();
             if ($setTemp->isEmpty()) {
-                SettingModel::create(
+                Setup::create(
                     [
                         'name'  => $key,
                         'value' => $value
@@ -50,7 +50,7 @@ class CodePayController extends Controller
         }
         $result = [];
         foreach ($this->settingArray as $key => $value) {
-            $setTemp      = SettingModel::where('name', $key)->first();
+            $setTemp      = Setup::where('name', $key)->first();
             $result[$key] = $setTemp['value'];
         }
         return $result;

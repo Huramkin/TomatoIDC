@@ -11,14 +11,6 @@
 |
 */
 
-//登陆 登出 注册 视图和操作
-
-// Password Reset Routes...
-//Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
-//Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
-//Route::get('password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
-//Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('password.update');
-//Route::get('auth/reset/pass', 'IndexController@resetFormPage')->name('password.request');
 
 Route::middleware(['check.install.status', 'throttle:60,1'])->group(function () {//安装路由
     //Install
@@ -28,23 +20,17 @@ Route::middleware(['check.install.status', 'throttle:60,1'])->group(function () 
 
 
 Route::middleware(['throttle:60,1','check.install.status'])->group(function () {
-    Route::get('/', "IndexController@indexPage");//首页视图
+    Route::get('/', function (){
+        return 'Hello TIDC';
+    });//首页视图
     //Goods Show Page
     Route::get('goods/show', 'IndexController@goodShowPage')->name('good.show');//商品列表Goods Show Page
     //User email　validate
-    Route::get('user/email/validate/{id}/{token}','IndexController@userEmailTokenValidate')->where(['id' => '^[0-9]*$']);
-    //Diy page view
     Route::get('page/{hash}','DiyPageController@indexPage')->name('diy_page');
 });
 
-Route::middleware(['guest','throttle:60,1'])->group(function (){
-    //Login
-    Route::get('login', 'IndexController@loginPage')->name('login');//登陆视图 Login View
-    Route::post('login', 'Auth\LoginController@login');//登陆操作 Login View
-    //Register
-    Route::get('register', 'IndexController@registerPage')->name('register');//注册视图 Register View
-    Route::post('register', 'Auth\RegisterController@register');//注册操作 Register View
-});
+Auth::Routes();
+
 // wecaht/order/notify /alipay/order/notify /diy/order/notify
 Route::any('/{payment}/order/notify', 'Payment\PayController@notify');//支付回调
 Route::get('/temp/cron', "IndexController@tempCronAction");//临时监控
@@ -54,6 +40,11 @@ Route::prefix('admin')->group(function () {//管理路由
         Route::name('admin.')->group(function () {
 
             Route::get('/', 'AdminController@indexPage')->name('home');//Home Index View
+
+            Route::prefix('api/v1')->group(function (){
+                Route::get('goods/list','Api\AdminController@goodsListApi');
+                Route::get('index','Api\AdminController@indexDataApi');
+            });
 
             Route::prefix('user')->group(function () { //User Setting
                 //Show
@@ -106,44 +97,44 @@ Route::prefix('admin')->group(function () {//管理路由
                 //del
                 Route::post('del', 'NewController@newDelAction')->name('new.del');
             });
-            Route::prefix('good')->group(function () { //商品
+            Route::prefix('goods')->group(function () { //商品
                 //Goods categories list
                 Route::get('show', 'AdminController@goodShowPage')->name('good.show');
                 //Goods categories add
                 Route::get('categories/add', 'AdminController@goodCategoriesAddPage')->name('good.categories.add');
-                Route::post('categories/add', 'GoodController@goodCategoriesAddAction');
+                Route::post('categories/add', 'GoodsController@goodCategoriesAddAction');
                 //Goods categories edit
                 Route::get('categories/edit/{id}', 'AdminController@goodCategoriesEditPage')->name('good.categories.edit')->where(['id' => '^[0-9]*$']);
-                Route::post('categories/edit', 'GoodController@goodCategoriesEditAction');
+                Route::post('categories/edit', 'GoodsController@goodCategoriesEditAction');
                 //Goods categories del
-                Route::post('categories/del', 'GoodController@goodCategoriesDelAction')->name('good.categories.del');
+                Route::post('categories/del', 'GoodsController@goodCategoriesDelAction')->name('good.categories.del');
                 //Goods configure add
                 Route::get('configure/add/{type}', 'AdminController@goodConfigureAddPage')->name('good.configure.add');
-                Route::post('configure/add', 'GoodConfigureController@goodConfigureAddAction');
+                Route::post('configure/add', 'GoodsConfigureController@goodConfigureAddAction');
                 //Goods configure del
-                Route::post('configure/del', 'GoodConfigureController@goodConfigureDelAction')->name('good.configure.del');
+                Route::post('configure/del', 'GoodsConfigureController@goodConfigureDelAction')->name('good.configure.del');
                 //Goods configure edit
                 Route::get('configure/edit/{id}', 'AdminController@goodConfigureEditPage')->name('good.configure.edit')->where(['id' => '^[0-9]*$']);
-                Route::post('configure/edit', 'GoodConfigureController@goodConfigureEditAction');
+                Route::post('configure/edit', 'GoodsConfigureController@goodConfigureEditAction');
                 //Goods add
                 Route::get('add', 'AdminController@goodAddPage')->name('good.add');
-                Route::post('add', 'GoodController@goodAddAction');
+                Route::post('add', 'GoodsController@goodAddAction');
                 //Goods Edit
                 Route::get('edit/{id}', 'AdminController@goodEditPage')->name('good.edit');
                 Route::get('edit', 'AdminController@userEditPage');
-                Route::post('edit', 'GoodController@goodEditAction');
+                Route::post('edit', 'GoodsController@goodEditAction');
 
                 Route::get('charging/{id}','AdminController@goodChargingPage')->name('good.charging');
-                Route::post('charging/edit','GoodController@goodChargingEdit')->name('good.charging.edit');
-                Route::post('charging/add','GoodController@goodChargingAdd')->name('good.charging.add');
-                Route::post('charging/del','GoodController@goodChargingDel')->name('good.charging.del');
+                Route::post('charging/edit','GoodsController@goodChargingEdit')->name('good.charging.edit');
+                Route::post('charging/add','GoodsController@goodChargingAdd')->name('good.charging.add');
+                Route::post('charging/del','GoodsController@goodChargingDel')->name('good.charging.del');
                 //Goods Del
-                Route::post('del', 'GoodController@goodDelAction')->name('good.del');
+                Route::post('del', 'GoodsController@goodDelAction')->name('good.del');
             });
 
             Route::prefix('setting')->group(function () { //全局设置
                 Route::get('/', 'AdminController@settingIndexPage')->name('setting.index');
-                Route::post('/', 'AdminController@settingEditAction');
+                Route::post('/', 'SetupController@settingEditAction');
                 //Payment Setting
                 Route::get('{payment}/pay/config', 'AdminController@paymentPluginConfigPage')->name('setting.pay');
                 Route::post('pay/config', 'Payment\PayController@paymentPluginConfigAction');
@@ -187,65 +178,69 @@ Route::prefix('admin')->group(function () {//管理路由
                 //del
                 Route::post('del', 'DiyPageController@diyPageDelAction')->name('diy.page.del');
             });
-            //Test
-            Route::get('email/show/{mailClassName}','MailDrive\UserMailController@emailViewTest');
-            Route::get('test/wechat/','Wechat\Message\Robot\TuringController@test');
         });
 
     });
 });
 
-
-Route::prefix('home')->group(function () {//首页路由
-    Route::middleware(['auth', 'throttle:60,1','user.email.validate'])->group(function () {
-        //Logout
-        Route::post('logout', 'Auth\LoginController@logout')->name('logout');//登出操作 Logout Action
-        //Home
-        Route::get('/', 'HomeController@indexPage')->name('home');//用户中心视图
-        //User profile
-        Route::get('user/profile', 'HomeController@userProfilePage')->name('user.profile');//个人信息视图
-        Route::post('user/profile', 'UserController@userProfileAction');//个人信息操作
-        //User Email Vaildate
-        Route::get('email/validate','HomeController@userEmailValidatePage')->name('user.email.validate');
-        //Goods Buy & pay
-        Route::get('buy/{id}', 'HomeController@goodsBuyPage')->name('good.buy');//个人信息视图
-        Route::get('pay/{no}', 'HomeController@rePayOrderPage')->name('order.pay.no')->where(['no' => '^[0-9]*$']);//订单未支付再次支付
-        Route::get('renew/{id}', 'HomeController@renewHostPage')->name('host.renew')->where(['id' => '^[0-9]*$']);//续费主机 //renew view
-        Route::post('renew/host', 'OrderController@renewHostAction')->name('host.renew.action');//续费主机 //renew action
-        Route::post('pay/re', 'OrderController@rePayOrderAction')->name('order.pay.re');//再次支付 //repay action
-        //Work Order
-        Route::get('workorder/show', 'HomeController@workOrderShowPage')->name('work.order.show');//工单列表
-        Route::get('workorder/add', 'HomeController@workOrderAddPage')->name('work.order.add');//工单添加
-        Route::post('workorder/add', 'WorkOrderController@workOrderAddAction')->name('work.order.add');//工单添加
-        //Host
-        Route::get('host/show', 'HomeController@hostShowPage')->name('host.show');//host list view
-        Route::post('host/reset/pass', 'HostController@resetPassHost')->name('host.pass.reset');//host reset password
-        Route::get('host/detailed/{id}', 'HomeController@hostDetailedPage')->name('host.detailed');//host detailed view
-
-        Route::post('host/panel/login','HostController@managePanelLogin')->where(['id' => '^[0-9]*$'])->name('host.panel.login');        //manager panel login action
-        //News
-        Route::get('new/show', 'HomeController@newShowPage')->name('new.show');//新闻列表 news list view
-        Route::get('new/{id}', 'HomeController@newPostPage')->name('new.post')->where(['id' => '^[0-9]*$']);//news detailed view
-        //Order
-        Route::get('order/show', 'HomeController@orderShowPage')->name('order.show');//新闻列表
-        Route::post('order/create', 'OrderController@orderCreateAction')->name('order.create');//消息列表
-        Route::get('order/detailed/{id}', 'HomeController@orderDetailedPage')->name('order.detailed')->where(['no' => '^[0-9]*$']); //Order detailed View
-        Route::any('order/status', 'OrderController@orderCheckStatusAction')->name('order.status');//订单状态
-        //Work order
-        Route::get('work/order/detailed/{id}', 'HomeController@workOrderDetailedPage')->name('work.order.detailed')->where(['id' => '^[0-9]*$']);//Work detailed View
-        Route::post('reply', 'WorkOrderController@workOrderReplyAction')->name('work.order.reply');//工单回复 Work reply action
-        //User recharge
-        Route::get('user/recharge','HomeController@userRechargePage')->name('user.recharge');//用户充值 //user recharge view
-        Route::post('user/recharge/pay','UserRechargeController@userRechargePayAction')->name('user.recharge.pay');//用户操作 //user pay action
-        Route::any('user/recharge/status','UserRechargeController@userRechargeCheckStatusAction')->name('user.recharge.status'); //User recharge status check action
-        Route::post('user/recharge/prepaid/key','PrepaidKeyController@rechargePrepaidKeyAction')->name('prepaid.key');//卡米充值 Key recharge action
-//diy Page
-//        Route::get('diy/page/temp/{hash?}{code?}','DiyPageController@diyPageTempPage')->name('diy.page.temp');
-    });
+//Route::post('logout', 'Auth\LoginController@logout')->name('logout');//登出操作 Logout Action
+Route::get('home',function (){
+   return "welcome";
 });
 
-Route::middleware(['auth','throttle:3,1'])->group(function () {
-    Route::post('home/email/validate/action','UserController@userEmailValidateSendAction')->name('user.email.validate.action');
+//V0.2移除全部直接返回，改用API
 
-});
+//Route::prefix('home')->group(function () {//首页路由
+//    Route::middleware(['auth', 'throttle:60,1'])->group(function () {
+//        //Logout
+//        Route::post('logout', 'Auth\LoginController@logout')->name('logout');//登出操作 Logout Action
+//        //Home
+//        Route::get('/', 'HomeController@indexPage')->name('home');//用户中心视图
+//        //User profile
+//        Route::get('user/profile', 'HomeController@userProfilePage')->name('user.profile');//个人信息视图
+//        Route::post('user/profile', 'UserController@userProfileAction');//个人信息操作
+//        //User Email Vaildate
+//        Route::get('email/validate','HomeController@userEmailValidatePage')->name('user.email.validate');
+//        //Goods Buy & pay
+//        Route::get('buy/{id}', 'HomeController@goodsBuyPage')->name('good.buy');//个人信息视图
+//        Route::get('pay/{no}', 'HomeController@rePayOrderPage')->name('order.pay.no')->where(['no' => '^[0-9]*$']);//订单未支付再次支付
+//        Route::get('renew/{id}', 'HomeController@renewHostPage')->name('host.renew')->where(['id' => '^[0-9]*$']);//续费主机 //renew view
+//        Route::post('renew/host', 'OrderController@renewHostAction')->name('host.renew.action');//续费主机 //renew action
+//        Route::post('pay/re', 'OrderController@rePayOrderAction')->name('order.pay.re');//再次支付 //repay action
+//        //Work Order
+//        Route::get('workorder/show', 'HomeController@workOrderShowPage')->name('work.order.show');//工单列表
+//        Route::get('workorder/add', 'HomeController@workOrderAddPage')->name('work.order.add');//工单添加
+//        Route::post('workorder/add', 'WorkOrderController@workOrderAddAction')->name('work.order.add');//工单添加
+//        //Host
+//        Route::get('host/show', 'HomeController@hostShowPage')->name('host.show');//host list view
+//        Route::post('host/reset/pass', 'HostController@resetPassHost')->name('host.pass.reset');//host reset password
+//        Route::get('host/detailed/{id}', 'HomeController@hostDetailedPage')->name('host.detailed');//host detailed view
+//
+//        Route::post('host/panel/login','HostController@managePanelLogin')->where(['id' => '^[0-9]*$'])->name('host.panel.login');        //manager panel login action
+//        //News
+//        Route::get('new/show', 'HomeController@newShowPage')->name('new.show');//新闻列表 news list view
+//        Route::get('new/{id}', 'HomeController@newPostPage')->name('new.post')->where(['id' => '^[0-9]*$']);//news detailed view
+//        //Order
+//        Route::get('order/show', 'HomeController@orderShowPage')->name('order.show');//新闻列表
+//        Route::post('order/create', 'OrderController@orderCreateAction')->name('order.create');//消息列表
+//        Route::get('order/detailed/{id}', 'HomeController@orderDetailedPage')->name('order.detailed')->where(['no' => '^[0-9]*$']); //Order detailed View
+//        Route::any('order/status', 'OrderController@orderCheckStatusAction')->name('order.status');//订单状态
+//        //Work order
+//        Route::get('work/order/detailed/{id}', 'HomeController@workOrderDetailedPage')->name('work.order.detailed')->where(['id' => '^[0-9]*$']);//Work detailed View
+//        Route::post('reply', 'WorkOrderController@workOrderReplyAction')->name('work.order.reply');//工单回复 Work reply action
+//        //User recharge
+//        Route::get('user/recharge','HomeController@userRechargePage')->name('user.recharge');//用户充值 //user recharge view
+//        Route::post('user/recharge/pay','UserRechargeController@userRechargePayAction')->name('user.recharge.pay');//用户操作 //user pay action
+//        Route::any('user/recharge/status','UserRechargeController@userRechargeCheckStatusAction')->name('user.recharge.status'); //User recharge status check action
+//        Route::post('user/recharge/prepaid/key','PrepaidKeyController@rechargePrepaidKeyAction')->name('prepaid.key');//卡米充值 Key recharge action
+////diy Page
+////        Route::get('diy/page/temp/{hash?}{code?}','DiyPageController@diyPageTempPage')->name('diy.page.temp');
+//    });
+//});
+
+
+//Route::middleware(['auth','throttle:3,1'])->group(function () {
+//    Route::post('home/email/validate/action','UserController@userEmailValidateSendAction')->name('user.email.validate.action');
+//
+//});
 //Route::get('home/email/validate/action/test','UserController@userEmailValidateSendAction');

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Payment;
 
 use App\Http\Controllers\Controller;
-use App\SettingModel;
+use App\Setup;
 
 class NilController extends Controller
 {

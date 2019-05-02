@@ -7,7 +7,7 @@ use App\Http\Controllers\Wechat\Message\EventController;
 use App\Http\Controllers\Wechat\Message\ImageHandle;
 use App\Http\Controllers\Wechat\Message\Robot\TuringController;
 use App\Http\Controllers\Wechat\Message\TextHandle;
-use App\SettingModel;
+use App\Setup;
 use App\User;
 use EasyWeChat\Factory;
 use EasyWeChat\Kernel\Messages\Text;
@@ -115,7 +115,7 @@ class WechatController extends Controller
                     $this->validate($request, [
                         $key => 'string|nullable'
                     ]);
-                    SettingModel::where('name', $value)->update(['value' => $request[$key]]);
+                    Setup::where('name', $value)->update(['value' => $request[$key]]);
                 }
             }
         }
@@ -163,7 +163,7 @@ class WechatController extends Controller
      */
     protected function checkWechatServiceStatus()
     {
-        $setting = SettingModel::where('name','setting.wechat.service.status')->get();
+        $setting = Setup::where('name','setting.wechat.service.status')->get();
 //        dd($setting->first()->value);
         if ($setting->isEmpty()){
             return false;
@@ -178,9 +178,9 @@ class WechatController extends Controller
     protected function getSettingFun($settingArray)
     {
         foreach ($settingArray as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->get();
+            $setTemp = Setup::where('name', $key)->get();
             if ($setTemp->isEmpty()) {
-                SettingModel::create([
+                Setup::create([
                     'name' => $key,
                     'value' => $value
                 ]);
@@ -188,7 +188,7 @@ class WechatController extends Controller
         }
         $result = [];
         foreach ($settingArray as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->first();
+            $setTemp = Setup::where('name', $key)->first();
             $result[$key] = $setTemp['value'];
         }
         return $result;

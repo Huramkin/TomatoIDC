@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\User;
-use App\WorkOrderModel;
+use App\Ticket;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class WorkOrderPolicy
@@ -14,10 +14,10 @@ class WorkOrderPolicy
      * Determine whether the user can view the work order model.
      *
      * @param  \App\User  $user
-     * @param  \App\WorkOrderModel  $workOrderModel
+     * @param  \App\Ticket  $workOrderModel
      * @return mixed
      */
-    public function view(User $user, WorkOrderModel $workOrderModel)
+    public function view(User $user, Ticket $workOrderModel)
     {
         return $user->id === $workOrderModel->user_id;
     }
@@ -37,10 +37,10 @@ class WorkOrderPolicy
      * Determine whether the user can update the work order model.
      *
      * @param  \App\User  $user
-     * @param  \App\WorkOrderModel  $workOrderModel
+     * @param  \App\Ticket  $workOrderModel
      * @return mixed
      */
-    public function update(User $user, WorkOrderModel $workOrderModel)
+    public function update(User $user, Ticket $workOrderModel)
     {
         //
     }
@@ -49,10 +49,10 @@ class WorkOrderPolicy
      * Determine whether the user can delete the work order model.
      *
      * @param  \App\User  $user
-     * @param  \App\WorkOrderModel  $workOrderModel
+     * @param  \App\Ticket  $workOrderModel
      * @return mixed
      */
-    public function delete(User $user, WorkOrderModel $workOrderModel)
+    public function delete(User $user, Ticket $workOrderModel)
     {
         //
     }
@@ -61,10 +61,10 @@ class WorkOrderPolicy
      * Determine whether the user can restore the work order model.
      *
      * @param  \App\User  $user
-     * @param  \App\WorkOrderModel  $workOrderModel
+     * @param  \App\Ticket  $workOrderModel
      * @return mixed
      */
-    public function restore(User $user, WorkOrderModel $workOrderModel)
+    public function restore(User $user, Ticket $workOrderModel)
     {
         //
     }
@@ -73,10 +73,10 @@ class WorkOrderPolicy
      * Determine whether the user can permanently delete the work order model.
      *
      * @param  \App\User  $user
-     * @param  \App\WorkOrderModel  $workOrderModel
+     * @param  \App\Ticket  $workOrderModel
      * @return mixed
      */
-    public function forceDelete(User $user, WorkOrderModel $workOrderModel)
+    public function forceDelete(User $user, Ticket $workOrderModel)
     {
         //
     }

@@ -2,15 +2,16 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\SetupController;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use App\SettingModel;
+use App\Setup;
+use Laravel\Telescope\TelescopeServiceProvider;
 use Illuminate\Support\Facades\View;
-
 
 class AppServiceProvider extends ServiceProvider
 {
-
     /**
      * 获取需要给模版传递的参数
      * 配置项名称 => 传递后变量名
@@ -30,22 +31,32 @@ class AppServiceProvider extends ServiceProvider
         'setting.website.privacy.policy'=>'privacyPolicy',
         'setting.website.user.agreements'=>'userAgreements',
         'setting.website.index.keyword'=>'keywords',
+        'setting.website.user.register.email.validate'=>"userRegisterEmailValidate",
     ];
 
     protected  function viewVariable()
     {
         if (!empty(config('database.connections.mysql.database'))) { //数据表未设置
-            if (Schema::hasTable('settings'))//当数据表存在才返回
+            if (Schema::hasTable('setups'))//当数据表存在才返回
             {
                 foreach ($this->getSetting as $key => $value) {
-                    $tmp = SettingModel::where('name', '=', $key)->get();
-                    !$tmp->isEmpty() ? $tmp = $tmp->first()->value : $tmp = null;
-                    View::share($value, $tmp);
+                    View::share($value, SetupController::getSetting($key));
                 }
             } else {
                 return null;
             }
         }
+    }
+
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
     }
 
     /**
@@ -57,15 +68,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
         $this->viewVariable();//向视图传递变量
-    }
-
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
-    {
-        //
+        if ($this->app->isLocal()) {
+            $this->app->register(TelescopeServiceProvider::class);
+        }
     }
 }

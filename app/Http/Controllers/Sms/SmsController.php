@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Sms;
 
-use App\SettingModel;
+use App\Setup;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
@@ -41,9 +41,9 @@ class SmsController extends Controller
     protected function getSettingFun($settingArray)
     {
         foreach ($settingArray as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->get();
+            $setTemp = Setup::where('name', $key)->get();
             if ($setTemp->isEmpty()) {
-                SettingModel::create([
+                Setup::create([
                     'name' => $key,
                     'value' => $value
                 ]);
@@ -51,7 +51,7 @@ class SmsController extends Controller
         }
         $result = [];
         foreach ($settingArray as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->first();
+            $setTemp = Setup::where('name', $key)->first();
             $result[$key] = $setTemp['value'];
         }
         return $result;
@@ -63,13 +63,13 @@ class SmsController extends Controller
      */
     protected function getControllerClass()
     {
-        $mailDriveName = SettingModel::where('name','setting.mail.drive')->first()->value;
+        $mailDriveName = Setup::where('name','setting.mail.drive')->first()->value;
         $controllerName = __NAMESPACE__ . '\\' . $mailDriveName . "Controller";
         if (class_exists($controllerName)) {//检测是否有该class
             $mailDrive = new $controllerName();//动态调用控制器
             return $mailDrive;
         }
-        SettingModel::where('name','setting.mail.drive')->update(['value'=>null]);//如果class不存在 直接邮件驱动清空设置
+        Setup::where('name','setting.mail.drive')->update(['value'=>null]);//如果class不存在 直接邮件驱动清空设置
         return redirect(route('admin.setting.index'));
     }
 
@@ -102,7 +102,7 @@ class SmsController extends Controller
             $this->validate($request, [
                 $key => 'string|nullable'
             ]);
-            SettingModel::where('name', $value)->update(['value' => $request[$key]]);
+            Setup::where('name', $value)->update(['value' => $request[$key]]);
         }
         return back()->with('status','success');
     }

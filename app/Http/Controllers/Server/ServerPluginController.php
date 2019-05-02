@@ -108,6 +108,23 @@ class ServerPluginController extends Controller
         return false;
     }
 
+    /**
+     * 检测连接
+     * @param $server
+     * @return bool
+     */
+    public function checkConnect($server)
+    {
+        $controllerName = __NAMESPACE__ . '\\' . $server->plugin . "Controller";
+        if (class_exists($controllerName)) {//检测是否有该class
+            $plugin = new $controllerName();//动态调用控制器
+            if (method_exists($plugin, 'checkConnect')) {
+                return $plugin->checkConnect($server);
+            }
+        }
+        return false;
+    }
+
 
     /**
      * 重置主机密码

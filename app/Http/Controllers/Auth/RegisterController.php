@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\UserController;
-use App\SettingModel;
 use App\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
@@ -52,24 +50,12 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'name' => 'required|string|max:16|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'username' => 'required|string|min:2|max:255|unique:users',
             'agreement' => 'string|accepted',
         ]);
-    }
-
-    protected function sendValidateMail($user)
-    {
-        if (Schema::hasTable('settings')){
-            if (
-                SettingModel::where('name','setting.website.user.email.validate')->first() != 0 &&
-                !SettingModel::where('name','setting.mail.drive')->get()->isEmpty()
-            ){
-                $userController = new UserController();
-                $userController->userEmailValidateSendAction($user);
-            }
-        }
     }
 
     /**
@@ -83,8 +69,10 @@ class RegisterController extends Controller
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'username' => $data['username'],
             'password' => Hash::make($data['password']),
-            'api_key'=>Hash::make(mt_rand(0,9999).time().config('app.name'))
+//            'api_token'=>Str::random(32)
+            'api_token' => Str::random(60),
         ]);
     }
 }

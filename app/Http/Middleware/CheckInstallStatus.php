@@ -3,8 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\User;
-use App\SettingModel;
+use App\Setup;
 use Closure;
+use Illuminate\Support\Facades\Cache;
 
 class CheckInstallStatus
 {
@@ -19,9 +20,24 @@ class CheckInstallStatus
     {
 
         if (!empty(config('database.connections.mysql.database'))) { //数据表未设置
+
+            if (Cache::has("setting.install.status")){
+                $installStatus = Cache::get("setting.install.status");
+            }else{
+                $data = Setup::where('title', '=', 'setting.install.status')->get()->isEmpty();
+                Cache::put("setting.install.status",$data,360);
+                $installStatus = Cache::get("setting.install.status");
+            }
+
+            if ($installStatus !== false){
+                Cache::forget("setting.install.status");
+            }
+
+
             if (
-                !SettingModel::where('name', '=', 'setting.install.status')->get()->isEmpty() or
-                SettingModel::all()->count() or
+//                !Setup::where('name', '=', 'setting.install.status')->get()->isEmpty() or
+                !$installStatus or
+                Setup::all()->count() or
                 !User::where('id', 1)->get()->isEmpty()
             ) {
                 if ($request->path() == 'install/init') {

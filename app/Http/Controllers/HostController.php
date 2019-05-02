@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\ChargingModel;
-use App\GoodConfigureModel;
-use App\GoodModel;
-use App\HostModel;
+use App\Bill;
+use App\GoodsConfigure;
+use App\Goods;
+use App\Host;
 use App\Http\Controllers\MailDrive\UserMailController;
 use App\Http\Controllers\Server\ServerPluginController;
 use App\Mail\UserHostCreate;
-use App\OrderModel;
-use App\ServerModel;
-use App\SettingModel;
+use App\Order;
+use App\Server;
+use App\Setup;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +53,7 @@ class HostController extends Controller
         $configure = json_decode($order->json_configure);
         if (empty($configure->type) && empty($configure->id)) {
             Log::info('订单出现配置错误，请检查', [$order]);
-            HostModel::where('id', $host->id)->update(['deadline' => Carbon::now()->addDays(1)]);
+            Host::where('id', $host->id)->update(['deadline' => Carbon::now()->addDays(1)]);
         }
 
         switch ($order->type){
@@ -71,45 +71,45 @@ class HostController extends Controller
 //        dd($time,$configure);
         switch ($configure->type) {
             case "multicycle":
-                $charging = ChargingModel::where('id', $configure->id)->get();
+                $charging = Bill::where('id', $configure->id)->get();
                 if ($charging->isEmpty()) {
                     Log::info('订单出现配置错误，请检查', [$order]);
-                    HostModel::where('id', $host->id)->update(['deadline' => $time->addDays(1)]);
+                    Host::where('id', $host->id)->update(['deadline' => $time->addDays(1)]);
                 }
                 $charging = $charging->first();
                 //TODO 历史遗留 待重构
                 if (config('app.locale') != "zh-CN") {
                     switch ($charging->unit) {
                         case "day":
-                            HostModel::where('id', $host->id)->update(['deadline' => $time->addDays($charging->time)]);
+                            Host::where('id', $host->id)->update(['deadline' => $time->addDays($charging->time)]);
                             break;
                         case "month":
-                            HostModel::where('id', $host->id)->update(['deadline' => $time->addMonths($charging->time)]);
+                            Host::where('id', $host->id)->update(['deadline' => $time->addMonths($charging->time)]);
                             break;
                         case  "year":
-                            HostModel::where('id', $host->id)->update(['deadline' => $time->addYears($charging->time)]);
+                            Host::where('id', $host->id)->update(['deadline' => $time->addYears($charging->time)]);
                             break;
                     }
                 }
 
                 switch ($charging->unit) {
                     case "天":
-                        HostModel::where('id', $host->id)->update(['deadline' => $time->addDays($charging->time)]);
+                        Host::where('id', $host->id)->update(['deadline' => $time->addDays($charging->time)]);
                         break;
                     case "月":
-                        HostModel::where('id', $host->id)->update(['deadline' => $time->addMonths($charging->time)]);
+                        Host::where('id', $host->id)->update(['deadline' => $time->addMonths($charging->time)]);
                         break;
                     case  "年":
-                        HostModel::where('id', $host->id)->update(['deadline' => $time->addYears($charging->time)]);
+                        Host::where('id', $host->id)->update(['deadline' => $time->addYears($charging->time)]);
                         break;
                 }
 
                 break;
             case "disposable":
-                HostModel::where('id', $host->id)->update(['deadline' => $time->addYears(10)]);
+                Host::where('id', $host->id)->update(['deadline' => $time->addYears(10)]);
                 break;
             case "month_price":
-                HostModel::where('id', $host->id)->update(['deadline' => $time->addMonths(1)]);
+                Host::where('id', $host->id)->update(['deadline' => $time->addMonths(1)]);
                 break;
 
         }
@@ -123,11 +123,11 @@ class HostController extends Controller
      */
     public function createHost($order)
     {
-        $good = GoodModel::where('id', $order->good_id)->first();
+        $good = Goods::where('id', $order->goods_id)->first();
         if (!empty($good->server_id) && !empty($good->configure_id)) {
             // 获取信息
-            $server = ServerModel::where('id', $good->server_id)->first();
-            $configure = GoodConfigureModel::where('id', $good->configure_id)->first();
+            $server = Server::where('id', $good->server_id)->first();
+            $configure = GoodsConfigure::where('id', $good->configure_id)->first();
             $serverController = new ServerPluginController();
 
             //尝试开通
@@ -143,7 +143,7 @@ class HostController extends Controller
 //                dd($order->json_configure);
 //                if ($order->json_configure)
 //                if (!empty($configure->time)) {//添加截止时间
-//                    HostModel::where('id', $host->id)->update(['deadline' => Carbon::now()->addDays($configure->time)]);
+//                    Host::where('id', $host->id)->update(['deadline' => Carbon::now()->addDays($configure->time)]);
 //                }
                 $this->hostNewSendMail($host->user, $host);
                 $order->host_id = $host->id;
@@ -172,14 +172,14 @@ class HostController extends Controller
                 'no' => 'exists:orders,no|required'
             ]
         );
-        $order = OrderModel::where('no', $request['no'])->first();
+        $order = Order::where('no', $request['no'])->first();
         //        dd($order);
         //        dd($order->status);
         //TODO 切换成switch判断
         if ($order->status == 3 && $order->type == "new") {
             $status = $this->createHost($order);
             if ($status) {
-                OrderModel::where('no', $request['no'])->update(['status' => '2']);
+                Order::where('no', $request['no'])->update(['status' => '2']);
                 return back()->with(['status' => 'success']);
             }
         }
@@ -201,7 +201,7 @@ class HostController extends Controller
                 'id' => 'exists:hosts|numeric'
             ]
         );
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $this->authorize('view', $host);
         //逻辑
         $server = $host->order->good->server;
@@ -228,15 +228,15 @@ class HostController extends Controller
                 'id' => 'exists:hosts|required'
             ]
         );
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $server = $host->order->good->server;
         $serverController = new ServerPluginController();
         $status = $serverController->terminateHost($server, $host);
         if ($status) {
-            HostModel::where('id', $host->id)->update(['status' => 4]);//标记已释放
+            Host::where('id', $host->id)->update(['status' => 4]);//标记已释放
             return 1;
         } else {
-            HostModel::where('id', $host->id)->update(['status' => 3]);//标记出错
+            Host::where('id', $host->id)->update(['status' => 3]);//标记出错
             return response('error', 500);
         }
     }
@@ -246,13 +246,13 @@ class HostController extends Controller
      */
     public function autoTerminateHost()
     {
-        $setting = SettingModel::where('name', 'setting.expire.terminate.host.data')->get();
+        $setting = Setup::where('name', 'setting.expire.terminate.host.data')->get();
         if ($setting->isEmpty()) {
             $day = 10;
         } else {
             $day = (int)$setting->first()->value;
         }
-        $hosts = HostModel::where(
+        $hosts = Host::where(
             [
                 ['status', '2'],
                 ['deadline', '<=', Carbon::now()->addDay($day)]
@@ -264,9 +264,9 @@ class HostController extends Controller
                 $serverController = new ServerPluginController();
                 $status = $serverController->TerminateHost($server, $host);
                 if ($status) {
-                    HostModel::where('id', $host->id)->update(['status' => 4]);//标记资源已永久删除
+                    Host::where('id', $host->id)->update(['status' => 4]);//标记资源已永久删除
                 } else {
-                    HostModel::where('id', $host->id)->update(['status' => 3]);//标记出错
+                    Host::where('id', $host->id)->update(['status' => 3]);//标记出错
                 }
             }
         }
@@ -280,9 +280,9 @@ class HostController extends Controller
     public function autoCheckAsyncCreateHost()
     {
         //异步开通
-        $async = SettingModel::where('name', 'setting.async.create.host')->get();
+        $async = Setup::where('name', 'setting.async.create.host')->get();
         if (!$async->isEmpty() && $async->first()->value == 1) {
-            $orders = OrderModel::where(
+            $orders = Order::where(
                 [
                     ['status', 4],
                 ]
@@ -306,7 +306,7 @@ class HostController extends Controller
      */
     public function autoCheckHostStatus()
     {
-        $hosts = HostModel::where(
+        $hosts = Host::where(
             [ //检测过期主机
                 ['status', '1'],
                 ['deadline', '<=', Carbon::now()]
@@ -318,9 +318,9 @@ class HostController extends Controller
                 $serverController = new ServerPluginController();
                 $status = $serverController->closeHost($server, $host);
                 if ($status) {
-                    HostModel::where('id', $host->id)->update(['status' => 2]);//标记已停用
+                    Host::where('id', $host->id)->update(['status' => 2]);//标记已停用
                 } else {
-                    HostModel::where('id', $host->id)->update(['status' => 3]);//标记出错
+                    Host::where('id', $host->id)->update(['status' => 3]);//标记出错
                 }
             }
             //            return $hosts;
@@ -343,7 +343,7 @@ class HostController extends Controller
                 'id' => 'exists:hosts|numeric'
             ]
         );
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $this->authorize('view', $host);
         //逻辑
         if (!empty($host->host_url)) {
@@ -375,15 +375,15 @@ class HostController extends Controller
                 'id' => 'exists:hosts|required'
             ]
         );
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $server = $host->order->good->server;
         $serverController = new ServerPluginController();
         $status = $serverController->closeHost($server, $host);
         if ($status) {
-            HostModel::where('id', $host->id)->update(['status' => 2]);//标记已停用
+            Host::where('id', $host->id)->update(['status' => 2]);//标记已停用
             return 1;
         } else {
-            HostModel::where('id', $host->id)->update(['status' => 3]);//标记出错
+            Host::where('id', $host->id)->update(['status' => 3]);//标记出错
             return response('error', 500);
         }
 
@@ -400,15 +400,15 @@ class HostController extends Controller
                 'id' => 'exists:hosts|required'
             ]
         );
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $server = $host->order->good->server;
         $serverController = new ServerPluginController();
         $status = $serverController->openHost($server, $host);
         if ($status) {
-            HostModel::where('id', $host->id)->update(['status' => 1, 'deadline' => null]);//标记正常,并清空到期时间
+            Host::where('id', $host->id)->update(['status' => 1, 'deadline' => null]);//标记正常,并清空到期时间
             return 1;
         } else {
-            HostModel::where('id', $host->id)->update(['status' => 3]);//标记出错
+            Host::where('id', $host->id)->update(['status' => 3]);//标记出错
             return response('error', 500);
         }
     }
@@ -430,7 +430,7 @@ class HostController extends Controller
                 'id' => 'exists:hosts|required'
             ]
         );
-        $host = HostModel::where('id', $request['id'])->first();
+        $host = Host::where('id', $request['id'])->first();
         $deadline = substr($host->deadline, 5, 2) . "/" .
             substr($host->deadline, 8, 2) . "/" .
             substr($host->deadline, 0, 4);
@@ -461,37 +461,37 @@ class HostController extends Controller
             return false;
         }
 
-        $host = HostModel::where('id', $order->host_id)->get();
+        $host = Host::where('id', $order->host_id)->get();
         if ($host->isEmpty()) {
             return false;
         }
         $host = $host->first();
-        $good = GoodModel::where('id', $order->good_id)->first();
+        $good = Goods::where('id', $order->goods_id)->first();
         if (!empty($good->server_id) && !empty($good->configure_id)) {
             // 获取信息
-            $server = ServerModel::where('id', $good->server_id)->first();
-            $configure = GoodConfigureModel::where('id', $good->configure_id)->first();
+            $server = Server::where('id', $good->server_id)->first();
+            $configure = GoodsConfigure::where('id', $good->configure_id)->first();
             $serverController = new ServerPluginController();
 
             //通知插件更新
             if (empty($configure) && empty($server)) { //商品配置错误，则订单状态改为等待审核
-                OrderModel::where('id', $order->id)->update(['status' => 3]);
+                Order::where('id', $order->id)->update(['status' => 3]);
                 return false;
             } else//调用创建函数
                 $status = $serverController->renewHost($server, $configure, $order, $host);
             if ($status) {
                 //开通成功后执行代码
                 //更新订单
-                HostModel::where('id', $order->host_id)->update(['order_id' => $order->id]);
+                Host::where('id', $order->host_id)->update(['order_id' => $order->id]);
                 $this->addTime($order,$host);
-                return OrderModel::where('id', $order->id)->first();
+                return Order::where('id', $order->id)->first();
             } else {
-                OrderModel::where('id', $order->id)->update(['status' => 3]);
+                Order::where('id', $order->id)->update(['status' => 3]);
                 return false;
             }
         }
         //默认错误返回
-        OrderModel::where('id', $order->id)->update(['status' => 3]);
+        Order::where('id', $order->id)->update(['status' => 3]);
         return false;
     }
 }

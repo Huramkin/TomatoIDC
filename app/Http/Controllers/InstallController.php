@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\SettingModel;
+use App\Setup;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -47,7 +47,7 @@ class InstallController extends Controller
             'password' => 'required|string|min:6|max:200',
         ]);
 
-        if (!SettingModel::all()->count()) {
+        if (!Setup::all()->count()) {
             $this->insertSettingSchema($request);
         }
         if (!User::all()->count()) {
@@ -62,10 +62,10 @@ class InstallController extends Controller
     public function checkSetting()
     {
         foreach ($this->settingArray as $key => $value) {
-            $setTemp = SettingModel::where('name', $key)->get();
+            $setTemp = Setup::where('title', $key)->get();
             if ($setTemp->isEmpty()) {
-                   SettingModel::create([
-                    'name' => $key,
+                   Setup::create([
+                    'title' => $key,
                     'value' => $value
                 ]);
             }
@@ -93,19 +93,21 @@ class InstallController extends Controller
         'setting.website.logo' => null,
         'setting.website.admin.theme' => 'default',
         'setting.website.url' => 'https://mercycloud.com',
-        'setting.website.title' => 'yfsama',
-        'setting.website.copyright' => 'yranarf',
+        'setting.website.title' => 'YFsama',
+        'setting.website.copyright' => 'YFsama',
         'setting.website.kf.url' => '/',
         'setting.website.good.inventory' => 1,//商品库存模式
         'setting.website.aff.status' => false,
         'setting.website.user.agreements' => null,//url 用户协议
         'setting.website.privacy.policy' => null,//url 隐私协议
         'setting.website.spa.status' => false,//SPA单页模板 启用全部指向index
+        'setting.website.admin.spa.status' => false,//SPA单页模板 启用全部指向index
         'setting.website.user.email.validate' => false,//邮箱验证
+        'setting.website.user.register.email.validate' => false,//注册邮箱验证
         'setting.website.user.phone.validate' => false,//手机验证
         'setting.website.admin.sales.notice' => false,//管理销售通知
         'setting.website.user.email.notice' => false,//用户邮件通知
-        'setting.website.version' => 'V0.1.8',
+        'setting.website.version' => 'V0.2.0',
 
         'setting.mail.drive' => null,//邮件驱动
         'setting.website.sms.facilitator' => null,//短信服务商
@@ -130,8 +132,8 @@ class InstallController extends Controller
         $settingTmp['setting.website.logo'] = $request['title'];
 
         foreach ($settingTmp as $key => $value) {
-            SettingModel::create([
-                'name' => $key,
+            Setup::create([
+                'title' => $key,
                 'value' => $value
             ]);
         }
@@ -147,11 +149,11 @@ class InstallController extends Controller
         User::create([
             'name' => $request['name'],
             'email' => $request['email'],
+            'username' => $request['name'],
             'password' => Hash::make($request['password']),
-            'api_key'=>Hash::make(mt_rand(0,9999).time().config('app.name'))
         ]);
         //管理员权限
         User::where('email', $request['email'])
-            ->update(['admin_authority' => 1,'email_validate'=>1]);
+            ->update(['admin_authority' => 1]);
     }
 }

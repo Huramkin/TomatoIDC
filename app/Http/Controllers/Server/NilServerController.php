@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
@@ -35,7 +35,7 @@ class NilServerController extends Controller
      */
     public function createHost($server, $configure, $order)
     {
-        $host = HostModel::create(
+        $host = Host::create(
             [
                 'order_id'   => $order->id,
                 'user_id'    => $order->user_id,

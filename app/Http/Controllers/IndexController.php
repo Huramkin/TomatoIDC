@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\GoodCategoriesModel;
-use App\GoodModel;
+use App\GoodsCategories;
+use App\Goods;
 use App\Http\Controllers\Payment\PayController;
 use App\Http\Resources\GoodCollection;
 use App\Http\Resources\GoodsCategoriesResource;
@@ -22,7 +22,7 @@ class IndexController extends Controller
      * 视图代码View
      */
 
-    public $version = "V0.1.7";//发布版本号
+    public static $version = "V0.2.0";//发布版本号
 
     /**
      * 返回重置密码表单
@@ -37,17 +37,7 @@ class IndexController extends Controller
      */
     public function indexPage()
     {
-//        dd(config('database.connections.mysql'));
-//        $this->middleware('check.install.status');
         return view(ThemeController::backThemePath('index'));
-    }
-
-    /**
-     * 返回登陆视图
-     */
-    public function loginPage()
-    {
-        return view(ThemeController::backThemePath('login', 'auth'));
     }
 
     /**
@@ -56,20 +46,15 @@ class IndexController extends Controller
      */
     protected function getGoods()
     {
-        $goods = GoodModel::where([
+        $goods = Goods::where([
             ['status', '!=', '0'],
-            ['display', 1]
-        ])->orderBy('level', 'desc')->get();
+        ])
+            ->join('goods_info','goods.id','=','goods_info.goods_id')
+            ->orderBy('created_at', 'desc')
+            ->get();
+//        dd(123);
         !$goods->isEmpty() ?: $goods = null;
         return $goods;
-    }
-
-    /**
-     * 返回登陆视图
-     */
-    public function registerPage()
-    {
-        return view(ThemeController::backThemePath('register', 'auth'));
     }
 
     /**
@@ -84,52 +69,12 @@ class IndexController extends Controller
     }
 
     /**
-     * user email validate action
-     * @param $id string url_path(url/{id}/token)
-     * @param $token string url_path(url/id/{token}
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-     */
-    public function userEmailTokenValidate($id,$token)
-    {
-        $token=htmlspecialchars(trim($token));
-        $user = User::where('id',htmlspecialchars(trim($id)))->get();
-        if(!$user->isEmpty()){
-            $user= $user->first();
-            if ($user->email_validate != 0){
-                return redirect('/home');
-            }
-            $encrypt = md5($user->email.substr(env('APP_KEY'),15,31).$user->id.$user->updated_at);
-            if ($encrypt == $token){
-                User::where('id',$id)->update(['email_validate'=>1]);
-                return redirect('/home');
-            }
-        }
-        return response()->json([
-            'status' => 'failure',
-            'date' => []
-        ]);
-    }
-
-
-    /**
-     * API代码
-     */
-
-    public function apiLoginAction(Request $request)
-    {
-        $this->validate($request,[
-            'email'=>'required|string',
-            'password' => 'required|string',
-        ]);
-    }
-
-    /**
      * 获取商品列表
      * @return GoodCollection|bool 成功JSON 失败返回null
      */
     public function getGoodListApi()
     {
-        $goods = GoodModel::where([
+        $goods = Goods::where([
             ['status', '!=', '0'],
             ['display', 1]
         ])->orderBy('level', 'desc')->get()->makeHidden([
@@ -155,7 +100,7 @@ class IndexController extends Controller
     public function getGoodCategoriesApi($name)
     {
         $name = htmlspecialchars(trim($name));
-        $categories = GoodCategoriesModel::where([
+        $categories = GoodsCategories::where([
             ['title', $name],
             ['status', '!=', '0'],
             ['display', 1]
@@ -182,10 +127,9 @@ class IndexController extends Controller
      */
     protected function getGoodsCategories()
     {
-        $goods_categories = GoodCategoriesModel::where([
-            ['status', '!=', '0'],
-            ['display', 1]
-        ])->orderBy('level', 'desc')->get();
+        $goods_categories = GoodsCategories::where([
+            ['status', '=',1 ],
+        ])->orderBy('created_at', 'desc')->get();
         !$goods_categories->isEmpty() ?: $goods_categories = null;
         return $goods_categories;
     }

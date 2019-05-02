@@ -1,19 +1,24 @@
-# TomatoIDC虚拟主机销售系统
+# TIDC主机销售管理系统
 
-![GPL3.0](https://badgen.net/badge/License/GPL-3.0/blue?icon=github)![PHP](https://badgen.net/badge/PHP/7.1.3+/orange)![Verison](https://badgen.net/badge/Verison/V0.1.8/cyan)![PHP](https://badgen.net/badge/版本/测试版/red)
+![GPL3.0](https://badgen.net/badge/License/GPL-3.0/blue?icon=github)![PHP](https://badgen.net/badge/PHP/7.1.3+/orange)![Verison](https://badgen.net/badge/Verison/V0.2.0 20190501 Dev/cyan) ![996icu](https://camo.githubusercontent.com/fce1dafb36f344f3caac8b9d6be435ba810e36ab/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c696e6b2d3939362e6963752d2532334646344435422e7376673f7374796c653d666c61742d737175617265)
 
 语言: [简体中文](https://github.com/MercyCloudTeam/TomatoIDC/blob/master/Readme.md) | 
 
-导航: [Github](https://github.com/MercyCloudTeam/TomatoIDC/) | [Coding](https://dev.tencent.com/u/Franary/p/TomatoIDC/git) | [Gitee](https://gitee.com/MercyCloud/TomatoIDC) | [交流论坛](https://dev.fanqieui.com) |[🚧官方文档](https://www.yuque.com/mercycloud/eg1gz6) | [Telegram](https://t.me/joinchat/LS-kqxSAs2QI-uYZTThRxg) | [QQ群](http://shang.qq.com/wpa/qunwpa?idkey=5bcf211d7faaafa83e0253d93be8d3813acebafcb24d4eb013d1e3ae9b015383)
+导航: [Github](https://github.com/MercyCloudTeam/TomatoIDC/) | [Gitee](https://gitee.com/MercyCloud/TomatoIDC) | [交流论坛🚧](https://moe.beer) |[🚧官方文档](https://www.yuque.com/mercycloud/eg1gz6) | [Telegram](https://t.me/joinchat/LS-kqxSAs2QI-uYZTThRxg) | [QQ群](http://shang.qq.com/wpa/qunwpa?idkey=5bcf211d7faaafa83e0253d93be8d3813acebafcb24d4eb013d1e3ae9b015383)
 
-## 介绍
+## 公告（重要）
 
-![预告图片](https://sz.ali.ftc.red/ftc/2019/04/01/-2.md.jpg)
+本分支为开发分支，V0.2.0是重构，**本分支目前不可使用**，只是将开发进度公开。
 
-TomatoIDC V0.1.9由于更新内容不大所以就跳过了
-TomatoIDC V0.2.0主要针对性能优化，功能优化，所以TomatoIDC V0.2.0不建议V0.1.x升级上来（如果自己有点技术可以升级）。
-目前还在更改以及测试，发布时间待定
-如果有建议请去QQ或TG或ISSUE提出，如果想要一起开发请发送邮件或私聊我
+V0.2.0主要更新在性能提升，前后端分离，并且完善测试，并添加按小时计费以及人性化修改
+
+并且将[开发任务板][https://trello.com/b/j8Al2UqG/tidc-%E5%BC%80%E5%8F%91%E8%AE%A1%E5%88%92]公开，感谢大家的支持，V0.2.0工作量的确比较大
+
+本版本前后端将分开部署，这里是后端仓库（前端还没写）
+
+有建议请在TG或Q群提出
+
+
 
 ### 特性
 
@@ -21,23 +26,21 @@ TomatoIDC V0.2.0主要针对性能优化，功能优化，所以TomatoIDC V0.2.0
 
   - 界面清新
   - 可视化管理界面
+  - API化
 
 - 可扩展
 
   - 支持（支付，服务器，功能）插件
   - 支持多种模版
-  - 支持SPA模板
 
 - 功能强大
 
   - 支持卡密充值
   - 支持多种支付方式
-  - 支持接入微信公众号（账户绑定，查询余额）
 
 - 人性化
 
   - Gravatar头像
-  - 微信公众号提醒
   - 邮件提醒
 
 
@@ -50,19 +53,13 @@ TomatoIDC是一款以[GPL3.0](https://opensource.org/licenses/gpl-3.0.html)协�
 
 ### 版本
 
-
-
-目前版本V0.1.8 较多功能还在开放当中，目前版本为测试版，但是使用是完全没有问题的，更新改动可能较大。
-
-关于框架版本：框架采用laravel最新版本
+关于框架版本：框架采用laravel最新版本（即Laravel 5.8）
 
 
 
 ### 演示站
 
-[演示站-1](https://dev.moe.beer/)
-
-[演示站-2](https://demo.tomatoidc.com)
+新版没演示站，还在本地开发
 
 > 都还没什么人的项目，建个演示站都要被人打:(
 
@@ -257,53 +254,13 @@ location / {
 - [CyberPanel](https://cyberpanel.net/)
 - [SwapIDC](http://www.swapidc.cn/)
 
-### 微信公众号
-
-- 绑定账号
-- 机器人自动回复（查询余额）
-
-
-
-### TODO
-
-- 服务器
-  - 服务器组
-  - 售卖VPS
-  - 服务器插件
-  - ~~售卖Shadowsocks~~（考虑到ss长久不更新可能会做V2ray）
-- 用户
-
-  - aff推广
-- 优惠卷
-- 文档完善
-- 教程完善
-- 用户等级
-- 第三方文件存储
-- 多周期付费
-
-
-
-
-### 模板
-
-- default(Argon源自[CreativeTim](https://www.creative-tim.com/))
-- SPA支持
-
-
-
 ## 本项目
 
 
 
 ### PRO版计划？
 
-我们暂无Pro版计划，我们可能会推出技术支持插件定制开发的，但如果是兼容面板，支付，我们会一步步进行开发，大家可以通过[交流论坛](https://dev.fanqieui.com)或者[交流群](https://jq.qq.com/?_wv=1027&k=52Llnjp)内提出
-
-
-
-### 功能开发
-
-欢迎在我们的[交流论坛](https://dev.fanqieui.com)里提出，如果越多人需要我们将会越快更新！
+我们暂无Pro版计划，我们可能会推出技术支持插件定制开发的，但如果是兼容面板，支付，我们会一步步进行开发，大家可以通过TG频道或者[交流群](https://jq.qq.com/?_wv=1027&k=52Llnjp)内提出
 
 
 
@@ -352,14 +309,6 @@ location / {
 ### 求支持
 
 不要脸的求支持，觉得这个项目不错的大家可以点一下右上角的小星星，有什么问题去论坛，群，GITHUB我都会看的．也会回复的
-
-
-
-也欢迎大家打赏我进知识星球MercyCloudTeam(可以白嫖主机等东西)
-
-里面可以看到我疯狂挖的新坑，以及一些好玩的BUG，以及一些先行的源代码
-
-[知识星球二维码](https://sz.ali.ftc.red/ftc/2018/11/27/image_822582455182_4.jpg)
 
 
 
@@ -427,4 +376,4 @@ TomatoIDC 是基于 GNU General Public License version 3 开放源代码的自�
 
 ### 感谢
 
-[Laravel](https://laravel.com/)   [Laravel-China](https://laravel-china.org/)  [CreativeTim](https://www.creative-tim.com/)  [printempw](https://blessing.studio/)  [番茄UI](https://www.fanqieui.com)  [MercyCloudTeam](https://mercycloud.com)  [Hostloc](https://www.hostloc.com)  [魔王](http://idc.la) [Overtrue](https://github.com/overtrue)  [Jcyt](s.iyt.li)
+[Laravel](https://laravel.com/)   [Laravel-China](https://laravel-china.org/)  [CreativeTim](https://www.creative-tim.com/)  [printempw](https://blessing.studio/)  [番茄UI](https://www.fanqieui.com)  [MercyCloudTeam](https://mercycloud.com)  [Hostloc](https://www.hostloc.com)  [魔王](http://idc.la) [Overtrue](https://github.com/overtrue)  [Jcyt](s.iyt.li)  [ACG科学](acg.science)

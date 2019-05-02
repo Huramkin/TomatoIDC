@@ -14,23 +14,24 @@ class CreateUsersTable extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('type')->nullable();//账户类型
             $table->string('name');
-            $table->string('email')->unique()->nullable();
+            $table->string('username')->unique();
             $table->string('password');
-            $table->string('avatar')->nullable();
-            $table->string('signature')->nullable();
-            $table->string('address')->nullable();
-            $table->string('qq')->nullable();
-            $table->string('phone')->unique()->nullable();
-            $table->string('user_token')->nullable();
-            $table->string('api_key')->nullable();
-            $table->string('api_token')->nullable();
-            $table->string('wechat_token')->nullable();
-            $table->string('qq_token')->nullable();
-            $table->double('account')->default(0);
+            $table->string('email')->unique()->nullable();
+            $table->timestamp('email_verified_at')->nullable();//邮箱验证
+            $table->string('api_token', 80)
+//                ->after('password') 开发环境mysql无法运行
+                ->unique()
+                ->nullable()
+                ->default(null);
+            $table->double('account')->default(0);//账户余额
             $table->integer('status')->default(1);
-            $table->integer('level')->default(1);
-            $table->integer('admin_authority')->default(0);
+            $table->integer('admin_authority')->default(0);//管理员权限
+            $table->timestamp('phone_validate_at')->nullable();//手机验证
+            $table->timestamp('real_name_validate_at')->nullable();//实名验证
+            $table->string('wechat_openid')->nullable();//微信绑定
+            $table->string('weibo_openid')->nullable();//微博绑定
             $table->rememberToken();
             $table->timestamps();
         });

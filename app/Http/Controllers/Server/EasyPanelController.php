@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
@@ -38,7 +38,7 @@ class EasyPanelController extends Controller
      */
     public function makeGetUrl()
     {
-        $server = ServerModel::where(
+        $server = Server::where(
             [
                 ['status', '!-', '0'],
                 ['plugin', 'easypanel'],
@@ -136,7 +136,7 @@ class EasyPanelController extends Controller
             $result = json_decode($result, true);
             if ($result['result'] == 200) {
                 //                $tempPort = !empty($server->port) ? $server->port : ":3312/vhost/";
-                $host = HostModel::create(
+                $host = Host::create(
                     [
                         'order_id' => $order->id,
                         'user_id' => $order->user_id,
@@ -244,7 +244,7 @@ class EasyPanelController extends Controller
         if ($result) {
             $result = json_decode($result, true);
             if ($result['result'] == 200) {
-                HostModel::where('id', $host->id)->update(['host_pass' => $password]);
+                Host::where('id', $host->id)->update(['host_pass' => $password]);
                 return $host;
             }
             Log::info('EasyPanel resetPassHost error', ['url' => $url]);

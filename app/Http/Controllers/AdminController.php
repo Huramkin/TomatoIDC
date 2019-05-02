@@ -2,25 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\GoodCategoriesModel;
-use App\GoodConfigureModel;
-use App\GoodModel;
-use App\HostModel;
-use App\Http\Controllers\MailDrive\UserMailController;
+use App\GoodsCategories;
+use App\GoodsConfigure;
+use App\Goods;
+use App\Host;
 use App\Http\Controllers\Payment\PayController;
 use App\Http\Controllers\Server\ServerPluginController;
 use App\Http\Controllers\Wechat\WechatController;
-use App\NewModel;
-use App\OrderModel;
+use App\Http\Resources\AdminGoods;
+use App\News;
+use App\Order;
 use App\PrepaidKeyModel;
-use App\ServerModel;
-use App\SettingModel;
+use App\Server;
+use App\Setup;
 use App\User;
-use App\WorkOrderModel;
-use App\WorkOrderReplyModel;
+use App\Ticket;
+use App\TicketReply;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  *  * 管理页面以及全局设置页面及操作
@@ -34,6 +36,25 @@ class AdminController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('check.admin.authority');
+    }
+
+    /**
+     *
+     * @return bool
+     */
+    public static function userRegisterEmailValidate()
+    {
+        if (Schema::hasTable('setting'))//当数据表存在才返回
+        {
+            $key = "setting.website.user.register.email.validate";
+            if (!Cache::has($key)) {
+                $data = Setup::where('name', '=', $key)->get();
+                !$data->isEmpty() ? $data = $data->first()->value : $data = null;
+                Cache::tags(['setting', 'public'])->put($key, $data, 86400);
+            }
+            return Cache::tags(['setting', 'public'])->get($key) ?? false;
+        }
+        return false;
     }
 
     /**
@@ -58,21 +79,23 @@ class AdminController extends Controller
      */
     public function indexPage()
     {
-        $userCount = User::all()->count();
-        $orderCount = OrderModel::all()->count();
-        $workOrderCount = WorkOrderModel::all()->count();
-        $hostCount = HostModel::all()->count();
-        $servers = $this->getServers();
-        $orders = [];
-        for ($i = 1; $i <= 7; $i++) {
-            $start = Carbon::now()->subDays($i - 1);
-            $end = Carbon::now()->subDay($i);
-            $order = OrderModel::where([
-                ['created_at', '<', $start],
-                ['created_at', '>', $end]
-            ])->get();
-            $order ?? null;
-            array_push($orders, $order);
+        if(empty(SetupController::getSetting("setting.website.admin.spa.status"))) {
+            $userCount = User::all()->count();
+            $orderCount = Order::all()->count();
+            $workOrderCount = Ticket::all()->count();
+            $hostCount = Host::all()->count();
+            $servers = $this->getServers();
+            $orders = [];
+            for ($i = 1; $i <= 7; $i++) {
+                $start = Carbon::now()->subDays($i - 1);
+                $end = Carbon::now()->subDay($i);
+                $order = Order::where([
+                    ['created_at', '<', $start],
+                    ['created_at', '>', $end]
+                ])->get();
+                $order = $order ?? null;
+                array_push($orders, $order);
+            }
         }
         return view(ThemeController::backAdminThemePath('index'), compact('userCount', 'orderCount', 'orders', 'workOrderCount', 'hostCount', 'servers'));
     }
@@ -82,7 +105,7 @@ class AdminController extends Controller
      */
     protected function getGoodsConfigure()
     {
-        $goodsConfigure = GoodConfigureModel::where([
+        $goodsConfigure = GoodsConfigure::where([
             ['status', '!=', '0']
         ])->get();
         !$goodsConfigure->isEmpty() ?: $goods = null;
@@ -94,7 +117,7 @@ class AdminController extends Controller
      */
     protected function getGoods()
     {
-        $goods = GoodModel::where([
+        $goods = Goods::where([
             ['status', '!=', '0']
         ])->get();
         !$goods->isEmpty() ?: $goods = null;
@@ -106,7 +129,7 @@ class AdminController extends Controller
      */
     protected function getGoodsCategories()
     {
-        $goods_categories = GoodCategoriesModel::where([
+        $goods_categories = GoodsCategories::where([
             ['status', '!=', '0']
         ])->get();
         !$goods_categories->isEmpty() ?: $goods_categories = null;
@@ -122,8 +145,7 @@ class AdminController extends Controller
         $install = new InstallController();
         $install->checkSetting();//防止某些设置未初始化
         //获取数据
-        $mailDrive = UserMailController::$drive;
-        $setting = SettingModel::all();
+        $setting = Setup::all();
         $themes = ThemeController::getThemeArr();
         $adminThemes = ThemeController::getAdminThemeArr();
         $payPlugins = PayController::getPayPluginArr();
@@ -135,7 +157,7 @@ class AdminController extends Controller
      */
     protected function getServers()
     {
-        $servers = ServerModel::where([
+        $servers = Server::where([
             ['status', '!=', '0']
         ])->get();
         !$servers->isEmpty() ?: $servers = null;
@@ -171,7 +193,7 @@ class AdminController extends Controller
      */
     protected function getHosts()
     {
-        $hosts = HostModel::where([
+        $hosts = Host::where([
             ['status', '!=', '0']
         ])->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -213,10 +235,10 @@ class AdminController extends Controller
      */
     public function goodChargingPage($id)
     {
-        $goods = GoodModel::where('id', $id)->get();
+        $goods = Goods::where('id', $id)->get();
         if (!$goods->isEmpty()) {
             $goods = $goods->first();
-            $tempGoodsController = new GoodController();
+            $tempGoodsController = new GoodsController();
             $charging = $tempGoodsController->getCharging($goods->id);
 //            dd($goods->charging);
             return view(ThemeController::backAdminThemePath('charging', 'goods'), compact('goods'));
@@ -240,7 +262,7 @@ class AdminController extends Controller
     public function goodConfigureAddPage($type)
     {
         $type = htmlspecialchars(trim($type));
-        $goods = new GoodController();
+        $goods = new GoodsController();
         $input = $goods->getConfigureFromInput($type);
         return view(ThemeController::backAdminThemePath('add_configure', 'goods'), compact('input', 'type'));
     }
@@ -252,10 +274,10 @@ class AdminController extends Controller
      */
     public function goodConfigureEditPage($id)
     {
-        $configure = GoodConfigureModel::where('id', $id)->get();
+        $configure = GoodsConfigure::where('id', $id)->get();
         if (!$configure->isEmpty()) {
             $configure = $configure->first();
-            $goods = new GoodController();
+            $goods = new GoodsController();
             $input = $goods->getConfigureFromInput($configure->type);
             return view(ThemeController::backAdminThemePath('edit_configure', 'goods'), compact('configure', 'input'));
         }
@@ -269,7 +291,7 @@ class AdminController extends Controller
      */
     public function goodCategoriesEditPage($id)
     {
-        $categories = GoodCategoriesModel::where('id', $id)->get();
+        $categories = GoodsCategories::where('id', $id)->get();
         if (!$categories->isEmpty()) {
             $categories = $categories->first();
             return view(ThemeController::backAdminThemePath('edit_categories', 'goods'), compact('categories'));
@@ -288,7 +310,7 @@ class AdminController extends Controller
         $servers = $this->getServers();
         $goodsConfigure = $this->getGoodsConfigure();
         $goods_categories = $this->getGoodsCategories();
-        $goods = GoodModel::where('id', $id)->get();
+        $goods = Goods::where('id', $id)->get();
         if (!$goods->isEmpty()) {
             $goods = $goods->first();
             return view(ThemeController::backAdminThemePath('edit', 'goods'), compact('goods', 'servers', 'goodsConfigure', 'goods_categories'));
@@ -303,7 +325,7 @@ class AdminController extends Controller
      */
     public function newEditAction($id)
     {
-        $new = NewModel::where('id', $id)->get();
+        $new = News::where('id', $id)->get();
         if (!$new->isEmpty()) {
             $new = $new->first();
             return view(ThemeController::backAdminThemePath('edit', 'news'), compact('new'));
@@ -337,10 +359,10 @@ class AdminController extends Controller
      */
     public function workOrderDetailedPage($id)
     {
-        $workOrder = WorkOrderModel::where('id', $id)->get();
+        $workOrder = Ticket::where('id', $id)->get();
         if (!$workOrder->isEmpty()) {
             $workOrder = $workOrder->first();
-            $reply = WorkOrderReplyModel::where('work_order_id', $workOrder->id)->get();
+            $reply = TicketReply::where('work_order_id', $workOrder->id)->get();
             !$reply->isEmpty() ?: $reply = null;//防止报错
             return view(ThemeController::backAdminThemePath('detailed', 'work_order'), compact('workOrder', 'reply'));
         }
@@ -353,7 +375,7 @@ class AdminController extends Controller
     public function serverEditPage($id)
     {
         $serverPlugin = ServerPluginController::getServerPluginArr();
-        $server = ServerModel::where('id', $id)->get();
+        $server = Server::where('id', $id)->get();
         if (!$server->isEmpty()) {
             $server = $server->first();
             return view(ThemeController::backAdminThemePath('edit', 'servers'), compact('serverPlugin', 'server'));
@@ -393,7 +415,7 @@ class AdminController extends Controller
      */
     public function orderEditPage($no)
     {
-        $order = OrderModel::where('no', $no)->get();
+        $order = Order::where('no', $no)->get();
         if (!$order->isEmpty()) {
             $order = $order->first();
             return view(ThemeController::backAdminThemePath('detailed', 'orders'), compact('order'));
@@ -407,7 +429,7 @@ class AdminController extends Controller
      */
     public function orderShowPage()
     {
-        $orders = OrderModel::where([
+        $orders = Order::where([
             ['status', '!=', '0']
         ])
             ->orderBy('created_at', 'desc')
@@ -428,7 +450,7 @@ class AdminController extends Controller
      */
     public function workOrderShowPage()
     {
-        $workOrder = WorkOrderModel::where([
+        $workOrder = Ticket::where([
             ['status', '!=', '0']
         ])
             ->orderBy('created_at', 'desc')
@@ -441,7 +463,7 @@ class AdminController extends Controller
      */
     public function newShowPage()
     {
-        $news = NewModel::where([
+        $news = News::where([
             ['status', '!=', '0']
         ])
             ->orderBy('created_at', 'desc')
@@ -458,7 +480,7 @@ class AdminController extends Controller
     public function hostDetailedPage($id)
     {
 
-        $host = HostModel::where('id', $id)->get();
+        $host = Host::where('id', $id)->get();
         if (!$host->isEmpty()) {
             $host = $host->first();
             return view(ThemeController::backAdminThemePath('detailed', 'hosts'), compact('host'));
@@ -527,167 +549,6 @@ class AdminController extends Controller
         return view(ThemeController::backAdminThemePath('show', 'diy_page'), compact('pages'));
     }
 
-    /**
-     * 190114 V0.1.8 优化代码新增
-     * 设置存储的配置Arr
-     * @var array
-     */
-    protected $settingArr = [
-        'setting.website.payment.wechat' => [
-            'validate' => 'string|nullable',
-            'title' => 'wechatplugin',
-            'type' => 'diy'
-        ],
-        'setting.website.payment.alipay' => [
-            'validate' => 'string|nullable',
-            'title' => 'alipayplugin',
-            'type' => 'diy'
-        ],
-        'setting.website.payment.qqpay' => [
-            'validate' => 'string|nullable',
-            'title' => 'qqpayplugin',
-            'type' => 'diy'
-        ],
-        'setting.website.payment.diy' => [
-            'validate' => 'string|nullable',
-            'title' => 'diyplugin',
-            'type' => 'diy'
-        ],
-        'setting.website.user.email.validate' => [
-            'validate' => 'string|nullable',
-            'title' => 'email_validate',
-            'type' => 'select'
-        ],
-        'setting.mail.drive' => [
-            'validate' => 'string|nullable',
-            'title' => 'mailDrive',
-            'type' => 'diy'
-        ],
-        'setting.website.spa.status' => [
-            'validate' => 'string|nullable',
-            'title' => 'spa',
-            'type' => 'select'
-        ],
-        'setting.website.user.email.notice' => [
-            'validate' => 'string|nullable',
-            'title' => 'email_notice',
-            'type' => 'select'
-        ],
-        'setting.website.admin.sales.notice' => [
-            'validate' => 'string|nullable',
-            'title' => 'sales_notice',
-            'type' => 'select'
-        ],
-        'setting.website.admin.theme' => [
-            'validate' => 'string|nullable',
-            'title' => 'admintheme',
-            'type' => 'diy'
-        ],
-        'setting.website.theme' => [
-            'validate' => 'string|nullable',
-            'title' => 'theme',
-            'type' => 'diy'
-        ],
-        'setting.website.aff.status' => [
-            'validate' => 'string|nullable',
-            'title' => 'aff_status',
-            'type' => 'select'
-        ],
-        'setting.website.title' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'title',
-            'type' => 'text'
-        ],
-        'setting.website.kf.url' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'kfurl',
-            'type' => 'text'
-        ],
-        'setting.website.privacy.policy' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'privacy_policy',
-            'type' => 'text'
-
-        ],
-        'setting.website.user.agreements' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'user_agreements',
-            'type' => 'text'
-        ],
-        'setting.website.subtitle' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'subtitle',
-            'type' => 'text'
-        ],
-        'setting.website.copyright' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'copyright',
-            'type' => 'text'
-        ],
-        'setting.website.currency.unit' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'currencyunit',
-            'type' => 'text'
-        ],
-        'setting.website.logo' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'logo',
-            'type' => 'text'
-        ],
-        'setting.website.logo.url' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'logourl',
-            'type' => 'text'
-        ],
-        'setting.wechat.service.status' => [
-            'validate' => 'string|nullable',
-            'title' => 'wechat_service',
-            'type' => 'text'
-        ],
-        'setting.expire.terminate.host.data' => [
-            'validate' => 'string|nullable',
-            'title' => 'terminate_host_data',
-            'type' => 'text'
-        ],
-        'setting.async.create.host' => [
-            'validate' => 'string|nullable',
-            'title' => 'async_create_host',
-            'type' => 'text'
-        ],
-        'setting.website.index.keyword' => [
-            'validate' => 'string|nullable|min:1|max:200',
-            'title' => 'website_keyword',
-            'type' => 'text'
-        ],
-    ];
-
-    /**
-     * 编辑网站配置操作
-     */
-    public function settingEditAction(Request $request)
-    {
-        //TODO 验证支付以及主题插件是否存在
-//        $themes = ThemeController::getThemeArr();
-//        $adminThemes = ThemeController::getAdminThemeArr();
-//        $payPlugins = PayController::getPayPluginArr();
-        $vaildateArr = [];
-        foreach ($this->settingArr as $item) {
-            $vaildateArr[$item['title']] = $item['validate'];
-        }
-
-        $this->validate($request, $vaildateArr);
-
-
-        foreach ($this->settingArr as $key => $value) {
-            if (SettingModel::where('name', $key)->first()->value == $request[$value['title']]) {
-                continue;
-            };
-            SettingModel::where('name', $key)->update(['value' => $request[$value['title']]]);
-        }
-
-        return redirect(route('admin.setting.index'))->with('status', 'success');
-    }
-
 
     /**
      * 微信配置页面
@@ -698,27 +559,11 @@ class AdminController extends Controller
         $mailDrive = new WechatController();
         $form = $mailDrive->configInputForm();
         if (is_array($form)) {
-            $setting = SettingModel::all();
+            $setting = Setup::all();
             return view(ThemeController::backAdminThemePath('wechat', 'setting'), compact('form', 'setting'));
         }
         return $form;
     }
-
-    /**
-     * 邮件配置页面
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View|mixed 成功返回配置视图，失败挑战设置页面
-     */
-    public function mailDriveConfigPage()
-    {
-        $mailDrive = new UserMailController();
-        $form = $mailDrive->configInputForm();
-        if (is_array($form)) {
-            $setting = SettingModel::all();
-            return view(ThemeController::backAdminThemePath('mail', 'setting'), compact('form', 'setting'));
-        }
-        return $form;
-    }
-
 
     /**
      * Payment Plugin Config Page
@@ -730,9 +575,11 @@ class AdminController extends Controller
         $pay = new PayController();
         $form = $pay->getPayPluginInputForm($payment);
         if (!empty($form)) {
-            $setting = SettingModel::all();
+            $setting = Setup::all();
             return view(ThemeController::backAdminThemePath('pay', 'setting'), compact('form', 'setting', 'payment'));
         }
         return redirect(route('admin.setting.index'));
     }
+
+
 }

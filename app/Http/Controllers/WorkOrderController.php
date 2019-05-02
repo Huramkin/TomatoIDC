@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\WorkOrderModel;
-use App\WorkOrderReplyModel;
+use App\Ticket;
+use App\TicketReply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yansongda\Pay\Log;
@@ -32,11 +32,11 @@ class WorkOrderController extends Controller
                     ]
         );
 
-        if (WorkOrderModel::where([['user_id', Auth::id()], ['status', '!=', 3]])->get()->count() >= 20) {
+        if (Ticket::where([['user_id', Auth::id()], ['status', '!=', 3]])->get()->count() >= 20) {
             return redirect(route('work.order.show'))->with(['status' => 'failure', 'text' => "未处理的工单太多了"]);
         }
 
-        WorkOrderModel::create(
+        Ticket::create(
             [
                 'title'    => $request['title'],
                 'content'  => $request['content'],
@@ -64,7 +64,7 @@ class WorkOrderController extends Controller
                         'id' => 'exists:work_order,id|required'
                     ]
         );
-        WorkOrderModel::where('id', $request['id'])->update(['status' => 4]);
+        Ticket::where('id', $request['id'])->update(['status' => 4]);
         return redirect(route('admin.work.order.show'));
     }
 
@@ -83,14 +83,14 @@ class WorkOrderController extends Controller
                         'content' => 'string|min:3|max:200'
                     ]
         );
-        WorkOrderReplyModel::create(
+        TicketReply::create(
             [
                 'work_order_id' => $request['id'],
                 'content'       => $request['content'],
                 'user_id'       => Auth::id()
             ]
         );
-        WorkOrderModel::where('id', $request['id'])->update(['status' => 2]);
+        Ticket::where('id', $request['id'])->update(['status' => 2]);
         return back()->with(['status' => 'success']);
     }
 
@@ -108,14 +108,14 @@ class WorkOrderController extends Controller
                         'content' => 'string|min:3|max:200'
                     ]
         );
-        WorkOrderReplyModel::create(
+        TicketReply::create(
             [
                 'work_order_id' => $request['id'],
                 'content'       => $request['content'],
                 'user_id'       => Auth::id()
             ]
         );
-        WorkOrderModel::where('id', $request['id'])->update(['status' => 1]);
+        Ticket::where('id', $request['id'])->update(['status' => 1]);
         return back()->with(['status' => 'success']);
     }
 }

@@ -6,10 +6,10 @@ namespace App\Http\Controllers\Server;
  * TODO 优化代码(代码太多重复了)
  */
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -64,7 +64,7 @@ class SolusvmController extends Controller
         $result = $response->getBody()->getContents();
         $result = json_decode($result);
         if (!empty($result) && $result->status == "success") { //成功
-            HostModel::where('id', $host->id)->update(['host_pass' => $password]);
+            Host::where('id', $host->id)->update(['host_pass' => $password]);
             return $host;
         }
         //错误返回
@@ -190,7 +190,7 @@ class SolusvmController extends Controller
         $result = json_decode($result);
 
         if (!empty($result) && $result->status == "success") { //成功创建
-            $host = HostModel::create(
+            $host = Host::create(
                 [
                     'order_id'   => $order->id,
                     'user_id'    => $order->user_id,
@@ -200,7 +200,7 @@ class SolusvmController extends Controller
                     'host_url'   => $this->protocol . $server->ip
                 ]
             );
-            HostModel::where('id', $host->id)->update(['server_id' => $result->vserverid]);
+            Host::where('id', $host->id)->update(['server_id' => $result->vserverid]);
             return $host;
         }
         //错误返回
@@ -235,7 +235,7 @@ class SolusvmController extends Controller
      * @param $status 0 =suspend  1= unsuspend
      * @param $server
      * @param $host
-     * @return HostModel|bool
+     * @return Host|bool
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function editVirtualServerStatus($status, $server, $host)
@@ -344,7 +344,7 @@ class SolusvmController extends Controller
      * 开通主机
      * @param $server
      * @param $host
-     * @return HostModel|bool
+     * @return Host|bool
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function openHost($server, $host)
@@ -360,7 +360,7 @@ class SolusvmController extends Controller
      * 停用主机
      * @param $server
      * @param $host
-     * @return HostModel|bool
+     * @return Host|bool
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function closeHost($server, $host)

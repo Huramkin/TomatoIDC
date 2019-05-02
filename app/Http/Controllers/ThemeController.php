@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\SettingModel;
+use App\Setup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 
 class ThemeController extends Controller
@@ -49,9 +50,9 @@ class ThemeController extends Controller
      */
     public static function getThemeName()
     {
-        $themes = SettingModel::where('name','setting.website.theme')->get();
-        if ($themes->first()) {
-            return $themes->first()->value;
+        $themes = SetupController::getSetting("setting.website.theme");
+        if (!empty($themes)){
+            return $themes;
         }
         return 'default';
     }
@@ -65,9 +66,10 @@ class ThemeController extends Controller
     public static function backThemePath($viewName = 'index', $prefix = null)
     {
         //SPA单页应用
-        $spa = SettingModel::where('name', 'setting.website.spa.status')->get();
-        if (!$spa->isEmpty()) {
-            if ($spa->first()->value == 1) {
+        $spa = SetupController::getSetting("setting.website.spa.status");
+//        $spa = Setup::where('name', 'setting.website.spa.status')->get();
+        if (isset($spa)) {
+            if ($spa == 1) {
                 $path = 'themes.' . self::getThemeName() . '.index';
                 if (View::exists($path)) {
                     return $path;
@@ -75,8 +77,7 @@ class ThemeController extends Controller
                 return 'themes.default.index';
             }
         }
-        //模
-        //版返回
+        //模板返回
         empty($prefix) ?: $prefix = '.' . $prefix;
         $path = 'themes.' . self::getThemeName() . $prefix . '.' . $viewName;
         if (View::exists($path)) {
@@ -96,7 +97,7 @@ class ThemeController extends Controller
      */
     public static function getAdminThemeName()
     {
-        $themes = SettingModel::where('name', '=', 'setting.website.admin.theme')->get();
+        $themes = SetupController::getSetting("setting.website.admin.theme");
         if ($themes->first()) {
             return $themes->first()->value;
         }
@@ -111,6 +112,18 @@ class ThemeController extends Controller
      */
     public static function backAdminThemePath($viewName = 'index', $prefix = null)
     {
+        $spa = SetupController::getSetting("setting.website.admin.spa.status");
+//        $spa = Setup::where('name', 'setting.website.spa.status')->get();
+        if (isset($spa)) {
+            if ($spa == 1) {
+                $theme = SetupController::getSetting("setting.website.admin.theme") ?? "default";
+                $path = 'admin.themes.' .$theme  . '.index';
+                if (View::exists($path)) {
+                    return $path;
+                }
+                return 'admin.themes.default';
+            }
+        }
         empty($prefix) ?: $prefix = '.' . $prefix;
         $path = 'admin.themes.' . self::getThemeName() . $prefix . '.' . $viewName;
         if (View::exists($path)) {

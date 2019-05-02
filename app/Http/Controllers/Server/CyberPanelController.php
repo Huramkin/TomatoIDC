@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -62,7 +62,7 @@ class CyberPanelController extends Controller
             Log::error('cyberPanel create host error', [$resp, $server]);
             return false;
         }
-        $host = HostModel::create(
+        $host = Host::create(
             [
                 'order_id'   => $order->id,
                 'user_id'    => $order->user_id,
@@ -72,7 +72,7 @@ class CyberPanelController extends Controller
                 'host_url'   => null
             ]
         );
-        OrderModel::where('id', $order->id)->update(['domain' => $domain]);
+        Order::where('id', $order->id)->update(['domain' => $domain]);
         return $host;
     }
 
@@ -162,7 +162,7 @@ class CyberPanelController extends Controller
      */
     public function renewHost($server, $configure, $order)
     {
-        //        OrderModel::where($server->order)
+        //        Order::where($server->order)
         return true;
     }
 
@@ -191,7 +191,7 @@ class CyberPanelController extends Controller
             Log::error('cyberPanel terminateHost error', [$resp, $server]);
             return false;
         }
-        HostModel::where('id', $host->id)->update(['host_pass' => $password]);
+        Host::where('id', $host->id)->update(['host_pass' => $password]);
         return $host;
     }
 

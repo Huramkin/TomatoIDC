@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\SettingModel;
+use App\Setup;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +17,7 @@ class UserEmailValidate
      */
     public function handle($request, Closure $next)
     {
-        $mode = SettingModel::where('name', 'setting.website.user.email.validate')->first()->value;
+        $mode = Setup::where('name', 'setting.website.user.email.validate')->first()->value;
         if ($mode == 0) {
             return $next($request);
         }

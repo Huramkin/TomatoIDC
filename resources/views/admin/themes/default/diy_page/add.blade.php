@@ -32,7 +32,7 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="form-group">
-                                    <label>内容(HTML代码会直接解析，请之行注意，防止XSS攻击的产生)</label>
+                                    <label>内容(HTML代码会直接解析，请自行注意，防止XSS攻击的产生)</label>
                                     <textarea rows="4" class="form-control form-control-alternative"
                                               name="content"
                                               placeholder="<p>Hello World</p>">{{old('content')}}</textarea>

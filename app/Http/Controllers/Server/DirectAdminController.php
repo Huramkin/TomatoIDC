@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 
@@ -110,7 +110,7 @@ class DirectAdminController extends Controller
         }
 
         if ($result['error'] == 0) {
-            $host = HostModel::create(
+            $host = Host::create(
                 [
                     'order_id'   => $order->id,
                     'user_id'    => $order->user_id,
@@ -231,7 +231,7 @@ class DirectAdminController extends Controller
             return false;
         }
 //        Log::error('DirectAdmin error', [$result]);
-        HostModel::where('id', $host->id)->update(['host_pass' => $pass]);
+        Host::where('id', $host->id)->update(['host_pass' => $pass]);
         return $host;
 
     }

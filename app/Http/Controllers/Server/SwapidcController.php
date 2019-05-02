@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +41,7 @@ class SwapidcController extends Controller
         $result = json_decode($result);
         if (!empty($result)) {
             if ($result->status == 'success') {
-                HostModel::where('id', $host->id)->update(['host_pass' => $result->msg->密码]);
+                Host::where('id', $host->id)->update(['host_pass' => $result->msg->密码]);
                 return $host;
             }
         }
@@ -154,7 +154,7 @@ class SwapidcController extends Controller
         if (!empty($result)) {
 //            dd($result);
             if ($result->status == 'success') {
-                $host = HostModel::create(
+                $host = Host::create(
                     [
                         'order_id' => $order->id,
                         'user_id' => $order->user_id,
@@ -165,7 +165,7 @@ class SwapidcController extends Controller
                     ]
                 );
 
-                HostModel::where('id',$host->id)->update(['panel_id'=>$result->msg->id]);
+                Host::where('id',$host->id)->update(['panel_id'=>$result->msg->id]);
                 return $host;
             }
         }

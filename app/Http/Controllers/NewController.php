@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\NewModel;
+use App\News;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,8 +26,8 @@ class NewController extends Controller
             'subtitle' => 'min:3|max:200|string',
             'description' => 'min:3|max:200|string',
         ]);
-        //逻辑
-        NewModel::create([
+        //添加
+        News::create([
             'title' => $request['title'],
             'subtitle' => $request['subtitle'],
             'description' => $request['description'],
@@ -53,7 +53,7 @@ class NewController extends Controller
             'id' => 'exists:news,id|required'
         ]);
         //逻辑
-        NewModel::where(['id' => $request['id']])->update([
+        News::where(['id' => $request['id']])->update([
             'title' => $request['title'],
             'subtitle' => $request['subtitle'],
             'description' => $request['description'],
@@ -75,7 +75,7 @@ class NewController extends Controller
         $this->validate($request, [
             'id' => 'exists:goods_categories,id|required'
         ]);
-        NewModel::where('id', $request['id'])->update(['status' => 0]);
+        News::where('id', $request['id'])->update(['status' => 0]);
         return redirect(route('admin.new.show'));
     }
 }

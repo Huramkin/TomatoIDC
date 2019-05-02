@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Server;
 
-use App\HostModel;
+use App\Host;
 use App\Http\Controllers\Controller;
-use App\OrderModel;
-use App\ServerModel;
+use App\Order;
+use App\Server;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -36,7 +36,7 @@ class PleskController extends Controller
         $result = $this->sendPost($server, $params);
         if ($result !== false) {
             if ($result == 0) {
-                HostModel::where('id', $host->id)->update(['host_pass' => $password]);
+                Host::where('id', $host->id)->update(['host_pass' => $password]);
                 return $host;
             }
         }
@@ -142,7 +142,7 @@ class PleskController extends Controller
         $result = $this->sendPost($server, $params);
 //        if ($result !== false) {
 //            if ($result == 0) {
-//                $host = HostModel::create(
+//                $host = Host::create(
 //                    [
 //                        'order_id' => $order->id,
 //                        'user_id' => $order->user_id,
